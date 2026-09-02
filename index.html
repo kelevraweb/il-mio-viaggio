@@ -806,9 +806,7 @@ function messaggioErrore(e){
   const c = e && e.code;
   if(c==="cancelled") return "";
   if(c==="not_granted"||c==="sampling_disabled"||c==="not_declared"||c==="capability_disabled")
-    return fuoriDallArtifact()
-      ? "Per il dialogo serve una chiave API di Anthropic: mettila in Impostazioni (in fondo a Il patto). Diario, desideri e centimetri funzionano lo stesso."
-      : "Per il dialogo serve aprire questa pagina dentro Claude con il proprio account. Diario, desideri e centimetri funzionano lo stesso.";
+    return "Il compagno di viaggio non è raggiungibile da qui, per ora.";
   if(c==="rate_limited") return "Troppe richieste ravvicinate. Riprova tra qualche minuto.";
   if(c==="session_expired") return "Sessione scaduta: rientra in Claude e riprova.";
   if(c==="prompt_too_large") return "C'è troppo testo da leggere in una volta. Aggiorna il ritratto per alleggerire la conversazione.";
@@ -1169,7 +1167,7 @@ function renderOggi(){
         <button class="btn-glass" id="ritratto-agg" ${turni < 2 ? "disabled" : ""}>${ico("refresh")} Aggiorna il ritratto</button>
         ${turni < 2 ? `<span class="mono">serve prima un po' di dialogo</span>` : ""}
         ${ritrattoVecchio ? `<span class="mono">sono passate più di due settimane</span>` : ""}
-      </div>` : `<p class="notice" style="margin-top:16px">Per il dialogo e il ritratto apri questa pagina dentro Claude, con il tuo account.</p>`}
+      </div>` : ""}
     </section>
   </div>`;
 
@@ -1266,9 +1264,7 @@ function renderDialogo(){
   <div class="wrap">
     <div class="panel liquid-glass deep" style="padding-top:26px">
       <div id="chat" class="chat">${S.dialogo.map((t,i)=>msgHTML(t,i)).join("")}</div>
-      ${sampleDeciso && !AI() ? (fuoriDallArtifact()
-        ? `<div class="notice" style="max-width:70ch;margin:22px auto 0">Per parlare con il compagno di viaggio serve una chiave API di Anthropic (resta nel tuo browser). Tutto il resto — diario, desideri, mantra, centimetri — funziona anche senza.<div class="row" style="margin-top:12px"><button class="btn-white" id="chat-chiave">Inserisci la chiave</button></div></div>`
-        : `<p class="notice" style="max-width:70ch;margin:22px auto 0">Per parlare con il compagno di viaggio devi aprire questa pagina dentro Claude, con il tuo account: le richieste vanno sul tuo utilizzo. Tutto il resto — diario, desideri, mantra, centimetri — funziona anche così.</p>`) : ""}
+
     </div>
     <div class="composer">
       <div class="composer-in liquid-glass deep">
@@ -1281,7 +1277,6 @@ function renderDialogo(){
     </div>
   </div>`;
   legaStrumentiMessaggi();
-  const ck = $("#chat-chiave"); if(ck) ck.addEventListener("click", impostaChiave);
   const inp = $("#chat-input");
   micChat = attachMic($("#chat-mic"), inp, $("#chat-live"));
   $("#chat-send").addEventListener("click", invia);
@@ -1709,7 +1704,7 @@ function renderPatto(){
         <p>Le <strong>domande a specchio</strong> tornano da sole dopo una settimana. Puoi anche non rispondere: a volte una domanda lavora meglio se resta aperta.</p>
         <p>La <strong>musica</strong> non è un file: viene generata dal vivo nel browser, una per ogni paesaggio, e non suona mai uguale. Il tasto in basso a destra la accende e la spegne; se la lasci accesa, alla prossima visita riparte al primo tocco.</p>
         <p>La <strong>voce</strong> viene trascritta dal riconoscimento vocale del tuo browser, in tempo reale, mentre parli. Se il microfono non è consentito in questa finestra, scrivi: tutto funziona lo stesso.</p>
-        ${fuoriDallArtifact() ? `<p><strong>Impostazioni.</strong> ${HTTP.proxy ? "Questa copia parla con Claude attraverso il suo server: non serve nessuna chiave." : (chiaveLocale() ? "Stai usando una tua chiave API di Anthropic, salvata in questo browser." : "Per il dialogo serve una chiave API di Anthropic, oppure una copia pubblicata con il server.")} <button class="btn-link" id="patto-chiave">${chiaveLocale() ? "cambia o rimuovi la chiave" : "inserisci una chiave"}</button></p>` : ""}
+        ${fuoriDallArtifact() && !HTTP.proxy ? `<p class="muted" style="font-size:14px"><strong style="color:var(--w70)">Collegamento.</strong> ${chiaveLocale() ? "Questo browser usa una tua chiave." : "Questa copia non è collegata al compagno di viaggio."} <button class="btn-link" id="patto-chiave">${chiaveLocale() ? "cambia o rimuovi la chiave" : "usa una tua chiave"}</button></p>` : ""}
         <p>Tutto quello che scrivi resta <strong>nel tuo browser</strong>: nessun server, nessuno lo legge, nemmeno chi ha costruito questa pagina. Con <em>Esporta</em> fai un backup e lo riprendi su un altro dispositivo.</p>
       </div>
     </section>
