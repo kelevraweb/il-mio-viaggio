@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
 <title>Il Mio Viaggio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -101,9 +102,20 @@ button:disabled{opacity:.4;cursor:default;transform:none !important;box-shadow:n
 .menu.open .switcher{opacity:1}
 
 /* ---------- hero (Oggi) ---------- */
-.hero{display:flex;flex-direction:column;min-height:calc(100vh - 84px)}
-.hero-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-  padding:20px 20px 28px;gap:22px;color:#fff;transition:color 700ms}
+:root{--nav:86px}
+@media (max-width:640px){:root{--nav:78px}}
+.hero{display:flex;flex-direction:column;height:calc(100vh - var(--nav));height:calc(100svh - var(--nav))}
+.hero-main{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:6px 20px 14px;gap:18px;color:#fff;transition:color 700ms}
+button.badge{border:0;cursor:pointer;color:inherit}
+.tape-wrap{margin:0 auto;width:calc(100% - 32px);max-width:900px;border-radius:18px;padding:12px 18px 10px;color:#fff;animation:rise 1s var(--ease) .7s both}
+.tape-wrap .tape-track{height:66px;padding-top:12px}
+.tape-wrap .tick.lived .stem{height:34px}.tape-wrap .tick.week .stem{height:20px}.tape-wrap .tick .stem{height:10px}
+.tape-wrap .tick.lived{cursor:pointer}
+@media (max-height:780px){.h-title{font-size:clamp(1.9rem,6vw,3.8rem)}.hero-main{gap:12px}.tape-wrap .tape-track{height:56px}.tape-wrap .tick.lived .stem{height:28px}}
+@media (max-height:680px){.h-sub{display:none}.badge{display:none}.stats{padding:8px 20px 10px}}
+@media (max-width:640px){.hero-chips{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;max-width:100%;scrollbar-width:none;padding:0 4px}.hero-chips::-webkit-scrollbar{display:none}.tape-wrap{width:calc(100% - 24px);padding:10px 14px 8px}}
+.ritratto-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;max-width:70ch;margin:0 auto 22px;padding-bottom:14px;border-bottom:1px solid var(--w08)}
 :root.bright .hero-main{color:var(--dark)}
 .badge{font-family:var(--sans);font-size:12.5px;padding:8px 16px;border-radius:999px;animation:rise .8s var(--ease) both}
 .h-title{font-size:clamp(2.3rem,7.2vw,5.5rem);line-height:1.1;max-width:22ch;margin:0;font-weight:400;text-wrap:balance;letter-spacing:-.01em}
@@ -394,7 +406,7 @@ const WIZARD = [
   { kicker:"Passo uno", titolo:"Si comincia dal Dialogo. Con una domanda sola.",
     corpo:"Apri **Dialogo**: la prima domanda è già lì. *Se togliessimo lavoro, ruolo, denaro, famiglia, risultati e ciò che gli altri pensano di te, chi rimane?*\n\nRispondi come viene — scrivendo, o **parlando**: premi il microfono e le parole compaiono mentre le dici. Poi ne arriva un'altra, una alla volta. Nessun piano, nessuna routine, nessuna strategia finché non lo chiedi tu.\n\nNon si esaurisce in una sera. Torna quando ne hai voglia." },
   { kicker:"Passo due", titolo:"Il ritratto è la memoria del viaggio.",
-    corpo:"Quando avete parlato un po', torna in **Oggi** e premi *Aggiorna il ritratto*. Quello che vi siete detti viene distillato in una pagina: chi sei, cosa ti fa sentire vivo, cosa ti porti dietro, le tue contraddizioni, le domande ancora aperte.\n\nDa quel momento il ritratto viene riletto ovunque nell'app, ogni volta. È il motivo per cui qui non ricominci da capo come in una chat qualunque.\n\nRileggilo ogni tanto. Se non ti riconosci, dillo nel dialogo e riaggiornalo." },
+    corpo:"Quando avete parlato un po', in cima al **Dialogo** premi *Aggiorna il ritratto*. Quello che vi siete detti viene distillato in una pagina: chi sei, cosa ti fa sentire vivo, cosa ti porti dietro, le tue contraddizioni, le domande ancora aperte.\n\nDa quel momento il ritratto viene riletto ovunque nell'app, ogni volta. È il motivo per cui qui non ricominci da capo come in una chat qualunque.\n\nRileggilo ogni tanto. Se non ti riconosci, dillo nel dialogo e riaggiornalo." },
   { kicker:"Ogni giorno, se ti va", titolo:"Un centimetro. Non un altro programma.",
     corpo:"Il centimetro è una piccola azione reale che rende visibile **oggi** la direzione che hai scelto. Non deve impressionare nessuno.\n\nE non è un obiettivo da spuntare: riposare, contemplare, chiamare qualcuno, giocare, camminare, dire di no, chiedere scusa o non fare niente consapevolmente sono centimetri.\n\nPer questo qui non trovi serie da non interrompere né giorni segnati in rosso. Un giorno vuoto resta un giorno vissuto.",
     citazione:"Qual è il tuo centimetro di oggi?" },
@@ -1009,12 +1021,18 @@ function renderNav(){
       <button class="menu-link" id="menu-export" style="transition-delay:${100+VISTE.length*50}ms;font-size:22px;color:rgba(255,255,255,.7)">Esporta</button>
       <button class="btn-white lg" id="menu-aiuto" style="transition-delay:${150+VISTE.length*50}ms">Come funziona</button>
     </div>`;
+  misuraNav();
   $("#burger").addEventListener("click", () => toggleMenu());
   $("#btn-aiuto").addEventListener("click", () => apriWizard(0));
   $("#menu-aiuto").addEventListener("click", () => { toggleMenu(false); apriWizard(0); });
   $("#btn-export").addEventListener("click", esporta);
   $("#menu-export").addEventListener("click", () => { toggleMenu(false); esporta(); });
 }
+function misuraNav(){
+  const n = $("#nav"); if(!n) return;
+  const h = n.offsetHeight; if(h) document.documentElement.style.setProperty("--nav", h + "px");
+}
+window.addEventListener("resize", debounce(misuraNav, 80));
 function toggleMenu(forza){
   const m = $("#menu"), b = $("#burger");
   const open = forza === undefined ? !m.classList.contains("open") : forza;
@@ -1067,7 +1085,6 @@ function renderOggi(){
   const q = specchioDaRiproporre();
   const turni = S.dialogo.filter(t=>t.role==="user").length;
   const primaVolta = !S.stato.ritratto && turni === 0;
-  const ritrattoVecchio = S.stato.ritratto && giorniDa(S.stato.ritrattoData) > 14;
   const fond = S.desideri.filter(d=>d.fondamentale && !d.proposta).length;
   const veri = S.desideri.filter(d=>!d.proposta).length;
 
@@ -1086,7 +1103,8 @@ function renderOggi(){
   $("#v-oggi").innerHTML = `
   <div class="hero">
     <div class="hero-main">
-      <span class="badge liquid-glass">${esc(badge)}</span>
+      ${q ? `<button class="badge liquid-glass" data-go="specchio">${ico("bookmark")} Una domanda conservata ti aspetta</button>`
+          : `<span class="badge liquid-glass">${esc(badge)}</span>`}
       <h1 class="h-title ${classe}">${titolo}</h1>
       <p class="h-sub">${sub}</p>
       ${primaVolta ? `
@@ -1102,90 +1120,34 @@ function renderOggi(){
           ${TIPI_CENTIMETRO.map(t=>`<button class="chip" data-tipo="${t}" aria-pressed="${centOggi && centOggi.tipo===t ? "true":"false"}">${t}</button>`).join("")}
         </div>
         <div class="live" id="cent-live"></div>`}
-      <div class="switcher fn">${VISTE.filter(([k])=>k!=="oggi").map(([k,l])=>`<button data-go="${k}" title="${SCENE[SCENA_PER_VISTA[k]].label}">${l}</button>`).join("")}</div>
+    </div>
+    <div class="tape-wrap liquid-glass">
+      <div class="spread">
+        <span class="eyebrow" style="margin:0">La traccia · otto settimane</span>
+        <span class="row" style="gap:14px">
+          ${AI() && !primaVolta ? `<button class="btn-link" id="cent-suggerisci">non so quale sia il centimetro</button>` : ""}
+          ${centOggi ? `<button class="btn-link" id="cent-elimina">cancella oggi</button>` : ""}
+        </span>
+      </div>
+      <div class="tape" id="tape"></div>
+      <div class="tape-base"></div>
     </div>
     <div class="stats">
       <span>${S.centimetri.length} centimetri</span><span class="sep">|</span>
       <span>${S.diario.length} pagine di diario</span><span class="sep">|</span>
       <span>${veri} desideri${fond?`, ${fond} fondamental${fond===1?"e":"i"}`:""}</span><span class="sep">|</span>
       <span>${S.stato.ritrattoData ? "ritratto del "+esc(dataIt(S.stato.ritrattoData)) : "ritratto non ancora scritto"}</span>
-      ${syncMsg ? `<span class="sep">|</span><span>${esc(syncMsg)}</span>` : ""}
     </div>
-    <div class="hint">${ico("chevron")}</div>
-  </div>
-
-  <div class="sections stagger">
-    ${primaVolta ? `<section class="panel liquid-glass deep">
-      <p class="eyebrow">Da dove si comincia</p>
-      <h3>Prima la persona, poi tutto il resto.</h3>
-      <ol class="passi">
-        <li><span>Apri il <strong>Dialogo</strong> e rispondi alla prima domanda — scrivendo o parlando. Una alla volta, con calma, anche in più sere.</span></li>
-        <li><span>Quando avete parlato abbastanza, torna qui e premi <strong>Aggiorna il ritratto</strong>: da lì in poi ti conosce davvero.</span></li>
-        <li><span>Solo dopo arrivano i <strong>desideri</strong> e il <strong>mantra</strong>. Non c’è fretta, e quanti siano lo decidi tu.</span></li>
-      </ol>
-      <div class="row" style="margin-top:22px">
-        <button class="btn-white" data-go="dialogo">Apri il dialogo</button>
-        <button class="btn-glass" id="oggi-aiuto">${ico("help")} Come funziona</button>
-      </div>
-    </section>` : ""}
-
-    ${q ? `<section class="panel liquid-glass deep specchio">
-      <p class="eyebrow" style="margin-bottom:2px">Domanda a specchio · conservata il ${esc(dataIt(q.creata))}</p>
-      <p class="q">${esc(q.domanda)}</p>
-      <div class="row" style="margin-top:18px">
-        <button class="btn-glass" data-riproposta="${q.id}">L'ho riletta</button>
-        <button class="btn-glass" data-portadialogo="${esc(q.domanda)}">Rispondile nel dialogo</button>
-      </div>
-    </section>` : ""}
-
-    ${centOggi || !primaVolta ? `<section class="panel liquid-glass deep">
-      <div class="spread">
-        <p class="eyebrow" style="margin:0">La traccia · ultime otto settimane</p>
-        ${AI() ? `<button class="btn-link" id="cent-suggerisci">non so quale sia il centimetro di oggi</button>` : ""}
-      </div>
-      <div class="tape" id="tape" style="margin-top:14px"></div>
-      <div class="tape-base"></div>
-      <div class="tape-legend">
-        <span><i></i>un centimetro vissuto</span>
-        <span><i class="pale"></i>un giorno che è passato, e va bene così</span>
-      </div>
-      <div id="cent-out" class="prose" style="margin-top:16px"></div>
-      ${centOggi ? `<div class="row" style="margin-top:14px"><button class="btn-link" id="cent-elimina">cancella il centimetro di oggi</button></div>` : ""}
-    </section>` : ""}
-
-    ${S.centimetri.filter(c=>c.data!==oggi).length ? `<section class="panel liquid-glass deep">
-      <p class="eyebrow">Prima di oggi</p>
-      ${S.centimetri.filter(c=>c.data!==oggi).slice(0,10).map(c=>`
-        <div class="cent-item"><span class="when">${esc(dataIt(c.data))}</span><span class="what">${esc(c.testo)}</span><span class="kind">${esc(c.tipo||"")}</span></div>`).join("")}
-    </section>` : ""}
-
-    <section class="panel liquid-glass deep">
-      <div class="spread">
-        <div>
-          <h3>Il ritratto</h3>
-          <p class="lede" style="font-size:14.5px;margin-top:6px;max-width:52ch">La memoria del viaggio: quello che il compagno di viaggio sa di te. Si aggiorna distillando il dialogo, e viene riletto ogni volta che gli parli.</p>
-        </div>
-        <span class="mono">${S.stato.ritrattoData ? "aggiornato il "+esc(dataIt(S.stato.ritrattoData)) : "mai scritto"}</span>
-      </div>
-      ${S.stato.ritratto ? `<div class="prose" style="margin-top:18px">${fmt(S.stato.ritratto)}</div>` : ""}
-      ${AI() ? `<div class="row" style="margin-top:20px">
-        <button class="btn-glass" id="ritratto-agg" ${turni < 2 ? "disabled" : ""}>${ico("refresh")} Aggiorna il ritratto</button>
-        ${turni < 2 ? `<span class="mono">serve prima un po' di dialogo</span>` : ""}
-        ${ritrattoVecchio ? `<span class="mono">sono passate più di due settimane</span>` : ""}
-      </div>` : ""}
-    </section>
   </div>`;
 
   disegnaTape();
 
-  // centimetro
   const tipi = $("#cent-tipi");
   if(tipi) tipi.addEventListener("click", e => {
     const b = e.target.closest("[data-tipo]"); if(!b) return;
     tipi.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c===b ? "true":"false"));
   });
   micCent = attachMic($("#cent-mic"), $("#cent-testo"), $("#cent-live"));
-  const salva = $("#cent-salva");
   const salvaCent = async () => {
     if(micCent) micCent.stop();
     const testo = $("#cent-testo").value.trim();
@@ -1196,36 +1158,30 @@ function renderOggi(){
     if(c){ c.testo = testo; c.tipo = tipo; }
     else { c = {id:oggi, data:oggi, testo, tipo}; S.centimetri.unshift(c); }
     await persistItem("centimetri", c);
-    toast("Segnato.");
-    renderOggi();
+    toast("Segnato."); renderOggi();
   };
-  if(salva) salva.addEventListener("click", salvaCent);
-  const ct = $("#cent-testo");
-  if(ct) ct.addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); salvaCent(); } });
+  const salva = $("#cent-salva"); if(salva) salva.addEventListener("click", salvaCent);
+  const ct = $("#cent-testo"); if(ct) ct.addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); salvaCent(); } });
   const del = $("#cent-elimina");
   if(del) del.addEventListener("click", async () => {
-    S.centimetri = S.centimetri.filter(x=>x.data!==oggi);
-    await removeItem("centimetri", oggi);
-    renderOggi();
+    if(!await conferma({titolo:"Cancello il centimetro di oggi?"})) return;
+    S.centimetri = S.centimetri.filter(x=>x.data!==oggi); await removeItem("centimetri", oggi); renderOggi();
   });
-  const sugg = $("#cent-suggerisci");
-  if(sugg) sugg.addEventListener("click", async () => {
-    const out = $("#cent-out"); sugg.disabled = true; out.innerHTML = PENSA;
-    try{
-      const r = await chiedi([{role:"user",content:REGOLE},{role:"user",content:
-        contesto() + "\n\nCHIEDE AIUTO A TROVARE IL CENTIMETRO DI OGGI. Proponi due o tre possibilità piccolissime e concrete, coerenti con ciò che sai di lui — e almeno una che non sia produttiva (riposare, contemplare, dire no, chiamare qualcuno, giocare, non fare nulla consapevolmente). Poi una sola domanda. Massimo otto righe."}],
-        {cache:false, onText:({text})=>{ out.innerHTML = fmt(text); }});
-      out.innerHTML = fmt(r.text);
-    }catch(e){ out.innerHTML = `<p class="muted">${esc(messaggioErrore(e))}</p>`; }
-    sugg.disabled = false;
-  });
-  const rag = $("#ritratto-agg"); if(rag) rag.addEventListener("click", aggiornaRitratto);
-  const oa = $("#oggi-aiuto"); if(oa) oa.addEventListener("click", () => apriWizard(0));
-  document.querySelectorAll("[data-riproposta]").forEach(b => b.addEventListener("click", async () => {
-    const q = S.specchio.find(x=>x.id===b.dataset.riproposta); if(!q) return;
-    q.ultimaRiproposta = OGGI_ISO(); await persistItem("specchio", q); render();
-  }));
-  document.querySelectorAll("[data-portadialogo]").forEach(b => b.addEventListener("click", () => portaNelDialogo(b.dataset.portadialogo)));
+  const sugg = $("#cent-suggerisci"); if(sugg) sugg.addEventListener("click", suggerisciCentimetro);
+}
+async function suggerisciCentimetro(){
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="modal-box liquid-glass deep"><p class="eyebrow">Il centimetro di oggi</p><div class="prose" data-out>${PENSA}</div>
+    <div class="row" style="margin-top:18px;justify-content:flex-end"><button class="btn-glass" data-x>Chiudi</button></div></div>`;
+  document.body.appendChild(m);
+  const out = m.querySelector("[data-out]"), chiudi = () => m.remove();
+  m.querySelector("[data-x]").onclick = chiudi; m.addEventListener("click", e => { if(e.target===m) chiudi(); });
+  try{
+    const r = await chiedi([{role:"user",content:REGOLE},{role:"user",content:
+      contesto() + "\n\nCHIEDE AIUTO A TROVARE IL CENTIMETRO DI OGGI. Proponi due o tre possibilità piccolissime e concrete, coerenti con ciò che sai di lui — e almeno una che non sia produttiva (riposare, contemplare, dire no, chiamare qualcuno, giocare, non fare nulla consapevolmente). Poi una sola domanda. Massimo otto righe."}],
+      {cache:false, onText:({text})=>{ out.innerHTML = fmt(text); }});
+    out.innerHTML = fmt(r.text);
+  }catch(e){ out.innerHTML = `<p class="muted">${esc(messaggioErrore(e))}</p>`; }
 }
 function portaNelDialogo(domanda){
   vai("dialogo");
@@ -1251,7 +1207,7 @@ function disegnaTape(){
       const cap = document.createElement("span"); cap.className = "cap";
       cap.textContent = d.toLocaleDateString("it-IT",{month:"short"}).replace(".",""); el.appendChild(cap);
     }
-    if(c){ const b = document.createElement("div"); b.className = "bead"; el.appendChild(b); }
+    if(c){ const b = document.createElement("div"); b.className = "bead"; el.appendChild(b); el.addEventListener("click", () => toast(dataIt(iso) + " — " + c.testo)); }
     const st = document.createElement("div"); st.className = "stem"; el.appendChild(st);
     track.appendChild(el);
   }
@@ -1265,9 +1221,18 @@ function disegnaTape(){
 let micChat = null;
 function renderDialogo(){
   if(!S.dialogo.length) S.dialogo.push({role:"assistant", content:APERTURA});
+  const turni = S.dialogo.filter(t=>t.role==="user").length;
   $("#v-dialogo").innerHTML = `
   <div class="wrap">
-    <div class="panel liquid-glass deep" style="padding-top:26px">
+    <div class="panel liquid-glass deep" style="padding-top:22px">
+      <div class="ritratto-bar">
+        <span class="mono">${S.stato.ritratto ? "Ritratto aggiornato il " + esc(dataIt(S.stato.ritrattoData)) : "Ritratto: non ancora scritto"}</span>
+        <span class="row" style="gap:12px">
+          ${S.stato.ritratto ? `<button class="btn-link" id="ritratto-leggi">leggi il ritratto</button>` : ""}
+          ${AI() ? `<button class="btn-glass" id="ritratto-agg" ${turni < 2 ? "disabled" : ""} title="${turni < 2 ? "serve prima un po' di dialogo" : "distilla il dialogo nella memoria del viaggio"}">${ico("refresh")} Aggiorna il ritratto</button>` : ""}
+        </span>
+      </div>
+      ${S.stato.ritratto ? `<div id="ritratto-testo" class="prose" hidden style="margin:0 auto 24px;max-width:70ch;padding-bottom:18px;border-bottom:1px solid var(--w08)">${fmt(S.stato.ritratto)}</div>` : ""}
       <div id="chat" class="chat">${S.dialogo.map((t,i)=>msgHTML(t,i)).join("")}</div>
 
     </div>
@@ -1282,6 +1247,8 @@ function renderDialogo(){
     </div>
   </div>`;
   legaStrumentiMessaggi();
+  const ra = $("#ritratto-agg"); if(ra) ra.addEventListener("click", aggiornaRitratto);
+  const rl = $("#ritratto-leggi"); if(rl) rl.addEventListener("click", () => { const t = $("#ritratto-testo"); t.hidden = !t.hidden; rl.textContent = t.hidden ? "leggi il ritratto" : "nascondi"; });
   const inp = $("#chat-input");
   micChat = attachMic($("#chat-mic"), inp, $("#chat-live"));
   $("#chat-send").addEventListener("click", invia);
@@ -1670,6 +1637,7 @@ function renderSpecchio(){
         <p class="eyebrow" style="margin-bottom:2px">conservata il ${esc(dataIt(q.creata))}${q.ultimaRiproposta?` · riletta il ${esc(dataIt(q.ultimaRiproposta))}`:""}</p>
         <p class="q">${esc(q.domanda)}</p>
         <div class="row" style="margin-top:16px">
+          ${giorniDa(q.ultimaRiproposta || q.creata) >= 7 ? `<button class="btn-glass" data-riproposta="${q.id}">L'ho riletta</button>` : ""}
           <button class="btn-glass" data-portadialogo2="${esc(q.domanda)}">Rispondile nel dialogo</button>
           <button class="btn-link" data-eliminasp="${q.id}">non mi serve più</button>
         </div>
@@ -1686,6 +1654,10 @@ function renderSpecchio(){
     S.specchio = S.specchio.filter(x=>x.id!==b.dataset.eliminasp); await removeItem("specchio", b.dataset.eliminasp); render();
   }));
   document.querySelectorAll("[data-portadialogo2]").forEach(b => b.addEventListener("click", () => portaNelDialogo(b.dataset.portadialogo2)));
+  document.querySelectorAll("[data-riproposta]").forEach(b => b.addEventListener("click", async () => {
+    const q = S.specchio.find(x=>x.id===b.dataset.riproposta); if(!q) return;
+    q.ultimaRiproposta = OGGI_ISO(); await persistItem("specchio", q); render();
+  }));
 }
 
 /* =========================================================================
