@@ -522,64 +522,84 @@ function conferma({titolo, testo="", ok="Sì", annulla="No"}){
   });
 }
 
-/* ---------------- voce → testo, in tempo reale ---------------- */
+/* ---------------- voce → testo, in tempo reale ----------------
+   Chrome/Android: sessione continua, riavviata con cautela quando il browser la chiude.
+   Safari/iOS: la modalità continua non esiste — una frase per pressione, e mai riavvii
+   automatici (un riavvio immediato in loop congela la pagina). La musica va in pausa
+   mentre il microfono ascolta: su iPhone registrare e suonare insieme fa crollare l'audio. */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const SAFARI = /safari/i.test(navigator.userAgent) && !/chrome|crios|android|fxios|edg/i.test(navigator.userAgent);
+const VOCE_CONTINUA = !(IOS || SAFARI);
 function attachMic(btn, campo, liveEl){
   if(!btn) return null;
   if(!SR){ btn.hidden = true; if(liveEl) liveEl.textContent = ""; return null; }
-  let rec = null, attivo = false, base = "", finale = "", interim = "", restart = false;
+  let rec = null, attivo = false, base = "", finale = "", interim = "", avviatoA = 0, riavvii = 0, musicaSospesa = false;
   const stato = html => { if(liveEl) liveEl.innerHTML = html; };
   const setVal = () => {
     const sep = base && !/\s$/.test(base) ? " " : "";
     campo.value = base + sep + finale + interim;
-    campo.dispatchEvent(new Event("input", {bubbles:true}));
+    try{ campo.dispatchEvent(new Event("input", {bubbles:true})); }catch(e){}
   };
-  function start(){
+  const sospendiMusica = () => { try{ if(AU.on && AU.ctx && AU.ctx.state === "running"){ musicaSospesa = true; AU.ctx.suspend(); } }catch(e){} };
+  const riprendiMusica = () => { try{ if(musicaSospesa){ musicaSospesa = false; if(AU.on && AU.ctx) AU.ctx.resume(); } }catch(e){} };
+  function fine(messaggio){
+    attivo = false; interim = ""; setVal();
+    btn.classList.remove("on"); btn.setAttribute("aria-pressed", "false");
+    riprendiMusica();
+    stato(messaggio || "");
+    if(messaggio) setTimeout(() => { if(!attivo) stato(""); }, 4000);
+  }
+  function avviaRiconoscimento(){
     rec = new SR();
-    rec.lang = "it-IT"; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+    rec.lang = "it-IT"; rec.continuous = VOCE_CONTINUA; rec.interimResults = true; rec.maxAlternatives = 1;
     rec.onresult = e => {
-      interim = "";
-      for(let i = e.resultIndex; i < e.results.length; i++){
-        const r = e.results[i];
-        if(r.isFinal) finale += r[0].transcript.trim() + " ";
-        else interim += r[0].transcript;
-      }
-      setVal();
-      stato(`<span class="dot"></span>${interim ? "<i>"+esc(interim)+"</i>" : "ti ascolto…"}`);
+      try{
+        interim = "";
+        for(let i = e.resultIndex; i < e.results.length; i++){
+          const r = e.results[i];
+          if(r.isFinal) finale += String(r[0].transcript).trim() + " ";
+          else interim += r[0].transcript;
+        }
+        setVal();
+        stato(`<span class="dot"></span>${interim ? "<i>"+esc(interim)+"</i>" : "ti ascolto…"}`);
+      }catch(err){}
     };
     rec.onerror = e => {
-      const c = e.error;
-      if(c === "no-speech" || c === "aborted") return;
-      attivo = false; restart = false; btn.classList.remove("on");
-      stato(c === "not-allowed" || c === "service-not-allowed"
-        ? "Il microfono non è consentito in questa finestra: controlla il permesso del browser, oppure scrivi."
+      const c = e && e.error;
+      if(c === "no-speech" || c === "aborted") return;              // onend decide cosa fare
+      fine(c === "not-allowed" || c === "service-not-allowed"
+        ? "Il microfono non è consentito qui: controlla il permesso del browser, oppure scrivi."
         : c === "network" ? "La trascrizione ha bisogno di rete e non l'ha trovata."
         : c === "audio-capture" ? "Nessun microfono trovato."
         : "La trascrizione si è interrotta.");
     };
     rec.onend = () => {
-      if(attivo && restart){ try{ rec.start(); return; }catch(e){} }
-      interim = ""; setVal();
-      btn.classList.remove("on");
-      if(attivo){ attivo = false; stato(""); }
+      if(!attivo) { riprendiMusica(); return; }
+      const durata = performance.now() - avviatoA;
+      // riavvio solo se: modalità continua, la sessione è durata davvero, e non abbiamo già riavviato troppe volte
+      if(VOCE_CONTINUA && durata > 2000 && riavvii < 15){
+        riavvii++;
+        setTimeout(() => { if(attivo){ try{ avviatoA = performance.now(); rec.start(); }catch(e){ fine(); } } }, 350);
+        return;
+      }
+      fine(VOCE_CONTINUA ? "" : (finale.trim() ? "Trascritto. Tocca ancora il microfono per continuare." : "Non ho sentito niente. Tocca il microfono e parla."));
     };
-    try{ rec.start(); }catch(e){ stato("Non riesco ad avviare il microfono."); return; }
-    attivo = true; restart = true; btn.classList.add("on");
-    stato('<span class="dot"></span>ti ascolto…');
+    avviatoA = performance.now();
+    rec.start();
   }
-  function stop(){
-    restart = false;
-    if(!attivo) return;
-    attivo = false;
-    try{ rec && rec.stop(); }catch(e){}
-    btn.classList.remove("on"); stato("");
-  }
+  btn.setAttribute("aria-pressed", "false");
   btn.addEventListener("click", () => {
-    if(attivo){ stop(); return; }
-    base = campo.value; finale = ""; interim = "";
-    start();
+    try{
+      if(attivo){ attivo = false; try{ rec && rec.stop(); }catch(e){} fine(); return; }
+      base = campo.value; finale = ""; interim = ""; riavvii = 0;
+      sospendiMusica();
+      attivo = true; btn.classList.add("on"); btn.setAttribute("aria-pressed", "true");
+      stato('<span class="dot"></span>' + (VOCE_CONTINUA ? "ti ascolto…" : "ti ascolto — parla, poi tocca ancora"));
+      avviaRiconoscimento();
+    }catch(err){ fine("Non riesco ad avviare il microfono qui."); }
   });
-  return { stop, get attivo(){ return attivo; } };
+  return { stop(){ if(attivo){ attivo = false; try{ rec && rec.stop(); }catch(e){} fine(); } }, get attivo(){ return attivo; } };
 }
 
 /* ---------------- persistenza ---------------- */
