@@ -976,10 +976,15 @@ function initMusica(){
   const b = document.getElementById("musica");
   b.innerHTML = ico("music") + '<span class="eq"><i></i><i></i><i></i><i></i></span><span class="lbl">Musica</span>';
   b.addEventListener("click", () => { AU.on ? musicaFerma() : musicaAvvia(); });
-  let voleva = false; try{ voleva = localStorage.getItem(KEY_MUSICA) === "1"; }catch(e){}
+  // accesa di default: i browser non fanno partire l'audio da soli, quindi parte al primo tocco
+  let voleva = true; try{ voleva = localStorage.getItem(KEY_MUSICA) !== "0"; }catch(e){}
   if(voleva){
     b.setAttribute("aria-pressed", "true"); b.title = "Musica — parte al primo tocco";
-    const primoGesto = () => { document.removeEventListener("pointerdown", primoGesto); document.removeEventListener("keydown", primoGesto); if(!AU.on) musicaAvvia(); };
+    const primoGesto = e => {
+      if(e.target && e.target.closest && e.target.closest("#musica")) return;   // il tasto decide da solo
+      document.removeEventListener("pointerdown", primoGesto); document.removeEventListener("keydown", primoGesto);
+      if(!AU.on) musicaAvvia();
+    };
     document.addEventListener("pointerdown", primoGesto); document.addEventListener("keydown", primoGesto);
   }
 }
@@ -1702,7 +1707,7 @@ function renderPatto(){
         <p>Il <strong>ritratto</strong> è la memoria: il dialogo si accorcia, il ritratto resta e viene riletto ogni volta. Aggiornalo quando senti che sei cambiato.</p>
         <p>I <strong>centimetri</strong> non hanno serie da non interrompere, né giorni segnati in rosso. Un giorno vuoto è un giorno vissuto lo stesso.</p>
         <p>Le <strong>domande a specchio</strong> tornano da sole dopo una settimana. Puoi anche non rispondere: a volte una domanda lavora meglio se resta aperta.</p>
-        <p>La <strong>musica</strong> non è un file: viene generata dal vivo nel browser, una per ogni paesaggio, e non suona mai uguale. Il tasto in basso a destra la accende e la spegne; se la lasci accesa, alla prossima visita riparte al primo tocco.</p>
+        <p>La <strong>musica</strong> non è un file: viene generata dal vivo nel browser, una per ogni paesaggio, e non suona mai uguale. È accesa di default e parte al primo tocco; il tasto in basso a destra la spegne, e la scelta viene ricordata.</p>
         <p>La <strong>voce</strong> viene trascritta dal riconoscimento vocale del tuo browser, in tempo reale, mentre parli. Se il microfono non è consentito in questa finestra, scrivi: tutto funziona lo stesso.</p>
         ${fuoriDallArtifact() && !HTTP.proxy ? `<p class="muted" style="font-size:14px"><strong style="color:var(--w70)">Collegamento.</strong> ${chiaveLocale() ? "Questo browser usa una tua chiave." : "Questa copia non è collegata al compagno di viaggio."} <button class="btn-link" id="patto-chiave">${chiaveLocale() ? "cambia o rimuovi la chiave" : "usa una tua chiave"}</button></p>` : ""}
         <p>Tutto quello che scrivi resta <strong>nel tuo browser</strong>: nessun server, nessuno lo legge, nemmeno chi ha costruito questa pagina. Con <em>Esporta</em> fai un backup e lo riprendi su un altro dispositivo.</p>
