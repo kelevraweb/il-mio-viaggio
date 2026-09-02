@@ -1,0 +1,1855 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Il Mio Viaggio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+
+<style>
+/* ============================================================
+   Il Mio Viaggio — cinematic build.
+   Un solo mondo visivo, scuro e vivo: quattro scene generative
+   sullo sfondo, vetro liquido davanti. Tutti i colori sono
+   dichiarati esplicitamente: la pagina non prende nulla dall'host.
+   ============================================================ */
+:root{
+  color-scheme:dark;
+  --w90:rgba(255,255,255,.9); --w70:rgba(255,255,255,.7); --w50:rgba(255,255,255,.5);
+  --w30:rgba(255,255,255,.3); --w14:rgba(255,255,255,.14); --w08:rgba(255,255,255,.08);
+  --dark:#182C41; --ink:#0f1512;
+  --serif:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(0.4,0,0.2,1);
+}
+*{box-sizing:border-box}
+html{font-family:var(--serif)}
+body{margin:0;background:#000;color:#fff;font-family:var(--serif);font-size:16px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:rgba(255,255,255,.28)}
+:focus-visible{outline:2px solid rgba(255,255,255,.8);outline-offset:3px;border-radius:6px}
+button{font:inherit}
+[hidden]{display:none !important}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+
+/* ---------- livelli di sfondo: i video dietro, il finestrino davanti ---------- */
+.bg{position:fixed;inset:0;z-index:0;background:#000;overflow:hidden}
+.bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;visibility:hidden;transition:opacity 1000ms ease-in-out}
+.bg video.on{opacity:1;visibility:visible}
+.bg video.fading{visibility:visible}
+.overlay{position:fixed;inset:0;z-index:1;pointer-events:none;width:100%;height:100%;object-fit:cover;object-position:center;
+  animation:bob 3s ease-in-out infinite;transform:scale(1.03)}
+@keyframes bob{0%{transform:translateY(0) scale(1.03)}50%{transform:translateY(-6px) scale(1.03)}100%{transform:translateY(0) scale(1.03)}}
+
+/* ---------- vetro liquido (dalla specifica) ---------- */
+.liquid-glass{background:rgba(255,255,255,0.01);background-blend-mode:luminosity;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border:none;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,0.1);position:relative;overflow:hidden}
+.liquid-glass::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.4px;
+  background:linear-gradient(180deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.15) 20%,rgba(255,255,255,0) 40%,
+    rgba(255,255,255,0) 60%,rgba(255,255,255,0.15) 80%,rgba(255,255,255,0.45) 100%);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.liquid-glass.deep{background:rgba(8,12,10,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+
+/* ---------- contenuto ---------- */
+.content{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px}
+@media (min-width:640px){.nav{padding:22px 28px}}
+.brand{font-style:italic;font-size:22px;color:#fff;text-decoration:none;letter-spacing:-.01em;background:none;border:0;cursor:pointer;padding:0}
+@media (min-width:640px){.brand{font-size:26px}}
+.navpill{display:none;align-items:center;gap:2px;border-radius:999px;padding:5px 5px 5px 6px}
+@media (min-width:860px){.navpill{display:flex}.burger{display:none !important}}
+.navlink{font-family:var(--sans);font-size:13px;color:var(--w90);padding:8px 12px;border-radius:999px;background:none;border:0;cursor:pointer;transition:color .2s,background .2s;white-space:nowrap;position:relative}
+.navlink:hover{color:#fff;background:var(--w08)}
+.navlink[aria-current="true"]{background:var(--w14);color:#fff}
+.navlink .dot{position:absolute;top:7px;right:6px;width:5px;height:5px;border-radius:50%;background:#cfc3ff;box-shadow:0 0 8px #cfc3ff}
+.navicon{width:34px;height:34px;border-radius:999px;background:none;border:0;color:var(--w90);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
+.navicon:hover{background:var(--w08);color:#fff}
+.btn-white{font-family:var(--sans);font-size:13px;font-weight:500;background:#fff;color:var(--ink);border:0;border-radius:999px;padding:9px 16px;cursor:pointer;
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease);white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.btn-white:hover{transform:translateY(-1px);box-shadow:0 10px 28px -12px rgba(255,255,255,.7)}
+.btn-white.lg{font-size:14.5px;padding:11px 20px}
+.btn-glass{font-family:var(--sans);font-size:13.5px;color:#fff;border-radius:999px;padding:9px 16px;cursor:pointer;border:1px solid var(--w14);background:var(--w08);
+  transition:background .2s,transform .25s var(--ease);display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.btn-glass:hover{background:var(--w14);transform:translateY(-1px)}
+.btn-link{background:none;border:0;padding:0;color:var(--w50);font-family:var(--sans);font-size:12.5px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;transition:color .2s}
+.btn-link:hover{color:#fff}
+button:disabled{opacity:.4;cursor:default;transform:none !important;box-shadow:none !important}
+.ico{width:16px;height:16px;flex:0 0 auto}
+
+/* hamburger con rotazione incrociata */
+.burger{width:42px;height:42px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;border:0;background:none}
+.burger .ico{position:absolute;width:20px;height:20px;transition:transform 300ms var(--ease),opacity 300ms var(--ease)}
+.burger .i-menu{transform:rotate(0) scale(1);opacity:1}
+.burger .i-x{transform:rotate(-90deg) scale(.75);opacity:0}
+.burger.open .i-menu{transform:rotate(90deg) scale(.75);opacity:0}
+.burger.open .i-x{transform:rotate(0) scale(1);opacity:1}
+
+/* menu mobile */
+.menu{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 500ms var(--ease)}
+.menu.open{opacity:1;pointer-events:auto}
+.menu-panel{display:flex;flex-direction:column;align-items:center;gap:14px;padding:40px 24px;width:100%}
+.menu-link{color:#fff;font-size:30px;font-family:var(--serif);background:none;border:0;cursor:pointer;padding:4px 10px;
+  opacity:0;transform:translateY(16px);transition:opacity 500ms var(--ease),transform 500ms var(--ease)}
+.menu.open .menu-link{opacity:1;transform:none}
+.menu .btn-white{margin-top:16px;transform:scale(.9);opacity:0;transition:transform 500ms var(--ease),opacity 500ms var(--ease)}
+.menu.open .btn-white{transform:scale(1);opacity:1}
+.menu .switcher{margin-top:18px;opacity:0;transition:opacity 500ms var(--ease) 450ms}
+.menu.open .switcher{opacity:1}
+
+/* ---------- hero (Oggi) ---------- */
+.hero{display:flex;flex-direction:column;min-height:calc(100vh - 84px)}
+.hero-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:20px 20px 28px;gap:22px;color:#fff;transition:color 700ms}
+:root.bright .hero-main{color:var(--dark)}
+.badge{font-family:var(--sans);font-size:12.5px;padding:8px 16px;border-radius:999px;animation:rise .8s var(--ease) both}
+.h-title{font-size:clamp(2.3rem,7.2vw,5.5rem);line-height:1.1;max-width:22ch;margin:0;font-weight:400;text-wrap:balance;letter-spacing:-.01em}
+.h-title.mantra{font-style:italic}
+.h-title.long{font-size:clamp(1.55rem,4.2vw,3.1rem);line-height:1.22;max-width:30ch}
+.h-title .w{display:inline-block;animation:rise .9s var(--ease) both;animation-delay:calc(var(--i) * 55ms)}
+.h-sub{font-family:var(--sans);font-size:clamp(15px,1.5vw,18px);line-height:1.65;max-width:36rem;margin:0;opacity:.85;animation:rise 1s var(--ease) .35s both}
+.h-sub em{font-family:var(--serif);font-style:italic;font-size:1.12em;opacity:1}
+.pill{display:flex;align-items:center;border-radius:999px;padding:5px 5px 5px 18px;width:100%;max-width:320px;gap:6px;animation:rise 1s var(--ease) .5s both}
+@media (min-width:640px){.pill{max-width:26rem}}
+.pill input{flex:1;background:none;border:0;outline:none;color:inherit;font-family:var(--sans);font-size:14.5px;min-width:0;padding:6px 0}
+.pill input::placeholder{color:currentColor;opacity:.55}
+.pill .mic{width:34px;height:34px;border:0;background:transparent;color:inherit}
+.pill .mic.on{background:#fff;color:var(--dark)}
+:root.bright .pill .mic.on{background:var(--dark);color:#fff}
+:root.bright .hero-main .btn-white{background:var(--dark);color:#fff}
+.hero-chips{justify-content:center;animation:rise 1s var(--ease) .6s both}
+.hero .chip{color:inherit;border-color:currentColor;opacity:.6}
+.hero .chip:hover{opacity:.9}
+.hero .chip[aria-pressed="true"]{opacity:1;background:#fff;color:var(--dark);border-color:#fff}
+:root.bright .hero .chip[aria-pressed="true"]{background:var(--dark);color:#fff;border-color:var(--dark)}
+.hero .live{color:inherit;opacity:.8;text-align:center}
+.switcher{display:flex;gap:18px;font-family:var(--sans);font-size:12.5px;flex-wrap:wrap;justify-content:center}
+.switcher button{background:none;border:0;border-bottom:1.5px solid transparent;color:inherit;opacity:.5;padding:6px 2px;cursor:pointer;transition:opacity .3s,border-color .3s}
+.switcher button:hover{opacity:.8}
+.switcher button[aria-pressed="true"]{opacity:1;border-bottom-color:currentColor}
+.hero .switcher{animation:rise 1s var(--ease) .75s both}
+.switcher.fn{gap:22px;font-size:13px}
+.switcher.fn button{opacity:.68;padding:6px 1px}
+.switcher.fn button:hover{opacity:1;border-bottom-color:currentColor}
+.scene-bar{display:flex;justify-content:center;padding:0 20px 14px;color:#fff}
+.scene-bar .switcher{font-size:11px;gap:14px;letter-spacing:.04em;text-transform:uppercase}
+.scene-bar .switcher button{opacity:.4;padding:3px 1px}
+.scene-bar .switcher button[aria-pressed="true"]{opacity:.9}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 12px;padding:14px 20px 18px;font-family:var(--sans);font-size:12px;color:var(--w70);animation:fade 1.2s .6s both}
+.stats .sep{display:none;opacity:.5}
+@media (min-width:640px){.stats{font-size:13px}.stats .sep{display:inline}}
+.hint{display:flex;justify-content:center;color:var(--w50);padding:0 0 10px;animation:hint 2.2s ease-in-out infinite}
+@keyframes hint{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(6px);opacity:1}}
+
+/* ---------- pannelli ---------- */
+.wrap{max-width:900px;width:100%;margin:0 auto;padding:6px 16px 90px}
+@media (min-width:640px){.wrap{padding:10px 24px 100px}}
+.sections{display:flex;flex-direction:column;gap:20px;max-width:900px;width:100%;margin:0 auto;padding:6px 16px 90px}
+.panel{border-radius:22px;padding:26px 26px;color:#fff}
+@media (min-width:640px){.panel{padding:32px 36px}}
+.stagger > *{animation:rise .7s var(--ease) both}
+.stagger > *:nth-child(2){animation-delay:70ms}.stagger > *:nth-child(3){animation-delay:140ms}.stagger > *:nth-child(4){animation-delay:210ms}
+.stagger > *:nth-child(5){animation-delay:280ms}.stagger > *:nth-child(6){animation-delay:350ms}.stagger > *:nth-child(7){animation-delay:420ms}.stagger > *:nth-child(n+8){animation-delay:490ms}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+.eyebrow{font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--w50);margin:0 0 10px}
+h1,h2,h3{font-family:var(--serif);font-weight:400;margin:0;text-wrap:balance}
+h1{font-size:clamp(34px,4.6vw,52px);line-height:1.05;letter-spacing:-.015em}
+h2{font-size:clamp(26px,3.2vw,36px);line-height:1.12}
+h3{font-size:23px;line-height:1.25}
+.lede{font-family:var(--sans);font-size:16px;line-height:1.65;color:var(--w70);max-width:60ch;margin:12px 0 0}
+.prose{font-family:var(--sans);font-size:16px;line-height:1.7;max-width:64ch;color:var(--w90)}
+.prose p{margin:0 0 .9em}.prose p:last-child{margin-bottom:0}
+.prose ul{margin:.3em 0 .9em;padding-left:1.2em}.prose li{margin:.25em 0}
+.prose strong{font-weight:600;color:#fff}
+.prose em{font-family:var(--serif);font-style:italic;font-size:1.1em}
+.muted{color:var(--w50)}
+.mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;color:var(--w50)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.notice{font-family:var(--sans);font-size:13.5px;color:var(--w90);background:var(--w08);border:1px solid var(--w14);border-radius:14px;padding:12px 16px;line-height:1.55}
+.empty{font-family:var(--serif);font-style:italic;font-size:19px;color:var(--w50);max-width:52ch}
+.badge-sm{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--w14);color:var(--w50);padding:2px 8px;border-radius:999px}
+
+/* campi */
+.inp{width:100%;font-family:var(--sans);font-size:15.5px;line-height:1.55;color:#fff;background:var(--w08);border:1px solid var(--w14);border-radius:14px;padding:12px 14px;outline:none;transition:border-color .2s,background .2s}
+.inp:focus{border-color:var(--w50);background:rgba(255,255,255,.11)}
+textarea.inp{resize:vertical;min-height:96px}
+.inp::placeholder{color:var(--w50)}
+label.field{display:block;margin-bottom:14px}
+label.field > span{display:block;font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--w50);margin-bottom:7px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--sans);font-size:12px;border:1px solid var(--w14);background:transparent;color:var(--w70);padding:5px 12px;border-radius:999px;cursor:pointer;transition:all .2s}
+.chip[aria-pressed="true"]{background:#fff;color:var(--ink);border-color:#fff}
+
+/* microfono */
+.mic{width:38px;height:38px;border-radius:50%;border:1px solid var(--w14);background:var(--w08);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex:0 0 auto;transition:background .2s,color .2s}
+.mic .ico{width:17px;height:17px}
+.mic.on{background:#fff;color:var(--ink)}
+.mic.on::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid currentColor;animation:ring 1.4s ease-out infinite}
+@keyframes ring{from{transform:scale(.9);opacity:.8}to{transform:scale(1.7);opacity:0}}
+.live{font-family:var(--sans);font-size:12.5px;color:var(--w70);min-height:18px;margin-top:8px;line-height:1.4}
+.live i{font-style:normal;color:#fff}
+.live .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff5f5f;margin-right:8px;animation:blink 1s infinite;vertical-align:1px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ---------- oggi: nastro ---------- */
+.tape{overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.tape::-webkit-scrollbar{display:none}
+.tape-track{display:flex;align-items:flex-end;height:92px;padding-top:12px}
+.tick{flex:0 0 15px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative;cursor:default;
+  animation:grow .6s var(--ease) both;animation-delay:calc(var(--i) * 6ms);transform-origin:bottom}
+.tick .stem{width:1px;height:12px;background:var(--w30)}
+.tick.week .stem{height:24px;background:var(--w50)}
+.tick.lived .stem{height:44px;width:2px;background:#fff;box-shadow:0 0 12px rgba(255,255,255,.55)}
+.tick.lived .bead{width:7px;height:7px;border-radius:50%;background:#fff;margin-bottom:2px;box-shadow:0 0 10px #fff}
+.tick.today .stem,.tick.today .bead{background:#ffd9a0;box-shadow:0 0 12px rgba(255,217,160,.8)}
+.tick .cap{position:absolute;top:0;font-family:var(--mono);font-size:9.5px;color:var(--w50)}
+.tape-base{height:1px;background:var(--w30)}
+.tape-legend{display:flex;gap:18px;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--w50);flex-wrap:wrap}
+.tape-legend i{display:inline-block;width:2px;height:11px;background:#fff;margin-right:6px;vertical-align:-1px;font-style:normal}
+.tape-legend i.pale{background:var(--w30);height:7px}
+@keyframes grow{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
+.cent-item{display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--w08);font-family:var(--sans)}
+.cent-item .when{font-family:var(--mono);font-size:11.5px;color:var(--w50);flex:0 0 74px;padding-top:3px}
+.cent-item .what{font-family:var(--serif);font-size:18px;flex:1}
+.cent-item .kind{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--w50);padding-top:5px}
+.passi{list-style:none;padding:0;margin:18px 0 0;counter-reset:p}
+.passi li{counter-increment:p;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid var(--w08);font-family:var(--sans);font-size:15.5px;color:var(--w70);line-height:1.55}
+.passi li::before{content:counter(p,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:#fff;padding-top:3px}
+.passi strong{color:#fff;font-weight:500}
+
+/* domanda a specchio */
+.specchio{border-left:2px solid #cfc3ff}
+.specchio .q{font-family:var(--serif);font-style:italic;font-size:25px;line-height:1.35;max-width:40ch;margin:8px 0 0}
+
+/* ---------- dialogo ---------- */
+.chat{display:flex;flex-direction:column;gap:22px;max-width:70ch;margin:0 auto}
+.msg{display:grid;grid-template-columns:52px 1fr;gap:16px;align-items:start;animation:rise .55s var(--ease) both}
+.msg .who{font-family:var(--sans);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--w50);padding-top:6px;text-align:right}
+.msg.me .body{font-family:var(--serif);font-size:19.5px;line-height:1.5;color:var(--w90);border-left:1.5px solid var(--w30);padding-left:16px}
+.msg .tools{margin-top:10px;display:flex;gap:14px;opacity:0;transition:opacity .2s}
+.msg:hover .tools,.msg:focus-within .tools{opacity:1}
+.think{display:inline-flex;gap:5px;align-items:center;padding:6px 0}
+.think i{width:6px;height:6px;border-radius:50%;background:var(--w70);animation:pulse 1.2s ease-in-out infinite}
+.think i:nth-child(2){animation-delay:.15s}.think i:nth-child(3){animation-delay:.3s}
+@keyframes pulse{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-4px);opacity:1}}
+.composer{position:sticky;bottom:14px;margin-top:24px;z-index:5}
+.composer-in{max-width:70ch;margin:0 auto;display:flex;gap:8px;align-items:flex-end;border-radius:24px;padding:8px 8px 8px 18px}
+.composer textarea{flex:1;background:none;border:0;outline:none;color:#fff;font-family:var(--sans);font-size:15.5px;line-height:1.5;resize:none;min-height:26px;max-height:200px;padding:7px 0}
+.composer textarea::placeholder{color:var(--w50)}
+.composer .send{width:38px;height:38px;border-radius:50%;background:#fff;color:var(--ink);border:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .25s var(--ease)}
+.composer .send:hover{transform:translateY(-1px) scale(1.04)}
+.composer .send .ico{width:17px;height:17px;margin-left:-2px}
+.composer-live{max-width:70ch;margin:8px auto 0;padding:0 18px}
+
+/* ---------- diario ---------- */
+.entry{padding:22px 0;border-top:1px solid var(--w08)}
+.entry .when{font-family:var(--mono);font-size:11.5px;color:var(--w50);margin-bottom:8px}
+.entry .txt{font-family:var(--serif);font-size:19px;white-space:pre-wrap;line-height:1.55}
+.entry .lettura{margin-top:14px;padding-left:16px;border-left:1.5px solid var(--w50)}
+
+/* ---------- desideri ---------- */
+.des{border:1px solid var(--w14);border-radius:16px;background:var(--w08);overflow:hidden;transition:background .2s}
+.des:hover{background:rgba(255,255,255,.11)}
+.des.proposta{border-style:dashed;background:transparent}
+.des-hd{display:flex;gap:12px;align-items:center;padding:14px 18px;cursor:pointer}
+.des-hd .t{font-family:var(--serif);font-size:21px;flex:1;line-height:1.3}
+.des-hd .dim{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--w50)}
+.star{background:none;border:0;cursor:pointer;color:var(--w50);padding:4px;display:inline-flex;transition:color .2s,transform .2s}
+.star .ico{width:18px;height:18px}
+.star[aria-pressed="true"]{color:#ffd9a0}.star[aria-pressed="true"] .ico{fill:#ffd9a0}
+.star:hover{transform:scale(1.15)}
+.des-body{padding:6px 18px 20px;border-top:1px solid var(--w08);animation:fade .3s both}
+
+/* ---------- patto ---------- */
+.patto-item{display:grid;grid-template-columns:56px 1fr;gap:20px;padding:24px 0;border-top:1px solid var(--w08)}
+.patto-item .n{font-family:var(--mono);font-size:12px;color:var(--w50);padding-top:8px}
+.patto-item h3{margin-bottom:8px}
+.patto-item .prose{color:var(--w70)}
+@media (max-width:640px){.patto-item{grid-template-columns:1fr;gap:4px}}
+
+/* ---------- wizard ---------- */
+.wiz{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;animation:fade .4s both}
+.wiz-box{width:100%;max-width:680px;border-radius:26px;padding:34px 30px}
+@media (min-width:640px){.wiz-box{padding:42px 46px}}
+.wiz-steps{display:flex;align-items:flex-end;height:22px;margin-bottom:34px}
+.wiz-steps button{background:none;border:0;padding:0;cursor:pointer;flex:0 0 28px;height:22px;display:flex;align-items:flex-end}
+.wiz-steps i{display:block;width:1px;height:9px;background:var(--w30);transition:height .25s,background .25s}
+.wiz-steps button.done i{height:15px;background:var(--w70)}
+.wiz-steps button[aria-current="true"] i{height:21px;width:2px;background:#fff;box-shadow:0 0 10px #fff}
+.wiz-body{animation:rise .45s var(--ease) both}
+.wiz-kicker{font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--w50);margin:0 0 12px}
+.wiz h2{margin-bottom:16px;max-width:20ch}
+.wiz .prose{font-size:17px;color:var(--w70)}
+.wiz .prose strong{color:#fff;font-weight:500}
+.wiz-quote{font-family:var(--serif);font-style:italic;font-size:23px;line-height:1.4;color:#fff;border-left:1.5px solid #fff;padding-left:18px;margin:26px 0 0;max-width:42ch}
+.wiz-foot{display:flex;align-items:center;gap:14px;margin-top:36px;flex-wrap:wrap}
+
+/* ---------- musica: tasto in basso a destra ---------- */
+.musica{position:fixed;right:18px;bottom:18px;z-index:40;width:46px;height:46px;border-radius:50%;border:0;color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(0,0,0,.28);transition:transform .25s var(--ease)}
+.musica:hover{transform:translateY(-1px)}
+.musica .ico{width:18px;height:18px}
+.musica .eq{display:none;gap:2px;align-items:flex-end;height:14px}
+.musica .eq i{width:2px;background:#fff;height:4px;border-radius:1px;animation:eq 1.1s ease-in-out infinite}
+.musica .eq i:nth-child(2){animation-delay:.2s}.musica .eq i:nth-child(3){animation-delay:.4s}.musica .eq i:nth-child(4){animation-delay:.6s}
+@keyframes eq{0%,100%{height:4px}50%{height:14px}}
+.musica[aria-pressed="true"] .eq{display:flex}
+.musica[aria-pressed="true"] .ico{display:none}
+.musica .lbl{position:absolute;right:54px;top:50%;transform:translateY(-50%);white-space:nowrap;font-family:var(--sans);font-size:12px;color:var(--w70);
+  opacity:0;transition:opacity .2s;pointer-events:none}
+.musica:hover .lbl{opacity:1}
+@media (max-width:700px){.composer-in{margin-right:56px}}
+
+/* ---------- modale / toast ---------- */
+.modal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fade .25s both}
+.modal-box{width:100%;max-width:540px;border-radius:22px;padding:26px 28px;color:#fff;animation:rise .35s var(--ease) both}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:80;color:#fff;font-family:var(--sans);font-size:13.5px;padding:10px 18px;border-radius:999px;animation:rise .35s var(--ease) both}
+.toast[hidden]{display:none}
+</style>
+
+<div class="bg" id="bg">
+  <video muted loop playsinline preload="none" data-i="0"><source src="{{VIDEO_0}}" type="video/mp4"></video>
+  <video muted loop playsinline preload="none" data-i="1"><source src="{{VIDEO_1}}" type="video/mp4"></video>
+  <video muted loop playsinline preload="none" data-i="2"><source src="{{VIDEO_2}}" type="video/mp4"></video>
+  <video muted loop playsinline preload="none" data-i="3"><source src="{{VIDEO_3}}" type="video/mp4"></video>
+</div>
+<img class="overlay" src="{{OVERLAY}}" alt="" aria-hidden="true">
+
+<div class="content">
+  <nav class="nav" id="nav"></nav>
+  <main id="main">
+    <section class="view" data-view="oggi" id="v-oggi"></section>
+    <section class="view" data-view="dialogo" id="v-dialogo" hidden></section>
+    <section class="view" data-view="diario" id="v-diario" hidden></section>
+    <section class="view" data-view="desideri" id="v-desideri" hidden></section>
+    <section class="view" data-view="mantra" id="v-mantra" hidden></section>
+    <section class="view" data-view="specchio" id="v-specchio" hidden></section>
+    <section class="view" data-view="patto" id="v-patto" hidden></section>
+  </main>
+</div>
+
+<div class="menu" id="menu" aria-hidden="true"></div>
+<button class="musica liquid-glass" id="musica" aria-pressed="false" title="Musica"></button>
+
+<script>
+/* =========================================================================
+   Il Mio Viaggio — diario di viaggio, laboratorio di vita.
+   Stato nel localStorage di chi usa la pagina: privato per costruzione.
+   Le conversazioni passano da claude.use("sample"). La voce passa dal
+   riconoscimento vocale del browser, trascritto in tempo reale.
+   ========================================================================= */
+
+const KEY = "ilmioviaggio.v1";
+const isoLocal = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+const OGGI_ISO = () => isoLocal(new Date());
+
+const APERTURA =
+  "Bene. Prima dei desideri, degli obiettivi e dei programmi voglio conoscere la persona che dovrà viverli.\n\n" +
+  "Prima domanda: se per un momento togliessimo lavoro, ruolo, denaro, famiglia, risultati, problemi e ciò che gli altri pensano di te… chi rimane?";
+
+const DIMENSIONI = ["corpo","relazioni","famiglia","amore","denaro","lavoro","libertà","conoscenza","spiritualità","esperienze","creatività","servizio","casa","natura","avventura","contributo","altro"];
+const TIPI_CENTIMETRO = ["azione","relazione","riposo","contemplazione","gioco","un no","altro"];
+
+const MANTRA_Q = [
+  ["chi","Chi sono?"],
+  ["cammino","Come cammino nel mondo?"],
+  ["genero","Che cosa genero attraverso la mia presenza?"],
+  ["custodisco","Che cosa custodisco?"],
+  ["dono","Che cosa dono?"],
+  ["credo","In cosa credo?"],
+  ["piuGrande","Qual è il mio rapporto con qualcosa di più grande di me, se ne riconosco uno?"],
+  ["traccia","Quale traccia voglio lasciare?"]
+];
+
+const PATTO = [
+  ["Prima di tutto: conoscimi","Non costruire ancora programmi, routine o strategie. Una domanda alla volta, aspettando sempre la risposta. Chi sono oggi, cosa amo, cosa mi emoziona, cosa mi fa sentire vivo, cosa non voglio più portare con me, quali paure mi condizionano, cosa faccio soltanto per abitudine o per il giudizio altrui, quali sono i miei valori non negoziabili, quale rapporto ho con amore, famiglia, corpo, denaro, lavoro, tempo, libertà, spiritualità e morte.\n\nNon un questionario impersonale. Se una risposta apre una porta importante, si entra in quella porta."],
+  ["I miei desideri","Non confondere obiettivi, doveri, aspettative, status e desideri. Prima una lista libera, anche abbondante. Poi la potatura, fino ai desideri fondamentali. Non devono essere undici: il numero emerge dalla mia vita, non è imposto.\n\nPer ognuno: perché lo desidero, che cosa rappresenta, che persona esprime quel desiderio, qual è il primo centimetro che posso vivere oggi."],
+  ["Il mantra identitario","Non una frase motivazionale generica: una dichiarazione identitaria personale. Il mantra deve essere mio. Non devo adattarmi alla frase — è la frase che deve aderire a me."],
+  ["La grammatica dell'identità","Prevalentemente il presente. Non «un giorno sarò», «prima o poi farò», «spero di riuscire», «quando avrò…».\n\nIO SONO. IO SCELGO. IO CREO. IO AGISCO. IO IMPARO. IO COSTRUISCO. IO VIVO.\n\nSe un risultato non è ancora materialmente avvenuto, non fingere che lo sia. Ma la sua costruzione può essere già presente nelle scelte di oggi. La visione riguarda anche il futuro; l'identità abita il presente."],
+  ["Fede","Fede in Dio, nella vita, nell'universo, nell'essere umano, nella coscienza, nella propria vocazione, nella propria capacità — oppure senza alcuna dimensione religiosa. Non deciderlo tu: scoprilo attraverso di me.\n\nNon ridurre una grande visione perché oggi sembra lontana. Ma non trasformare la fede in pensiero magico.\n\nIdentità → visione → fede → coraggio → azione → esperienza → apprendimento → strategia → perseveranza → centimetro.\n\nQuando dubito: prima ricordare perché credo, poi controllare i fatti, poi correggere la strategia. Non necessariamente la visione."],
+  ["Il centimetro","Una piccola azione reale che rende visibile oggi la direzione che ho scelto. Non deve impressionare nessuno. Abbastanza piccola da poter essere vissuta, abbastanza significativa da mantenere viva la traiettoria.\n\nMa il centimetro non è un'altra ossessione produttiva. Riposare, contemplare, parlare con qualcuno, giocare, camminare, dire no, chiedere scusa o non fare nulla consapevolmente sono centimetri."],
+  ["La regola serve la vita","La vita non serve la regola. Routine, alimentazione, allenamento, meditazione, lavoro, denaro, organizzazione e disciplina sono strumenti, non padroni. Se una regola continua ad allontanarmi dalla vita che dovrebbe aiutarmi a vivere, va riesaminata.\n\nNon una prigione più efficiente. Una vita più viva."],
+  ["Non darmi sempre ragione","Se sto razionalizzando, dimmelo. Se sto usando spiritualità, destino, energia, manifestazione o fede per evitare una decisione concreta, fammelo vedere. Se confondo intuizione e paura, aiutami a distinguerle. Se mi sto raccontando una storia comoda, interrogala.\n\nMa non demolire automaticamente ciò che è grande soltanto perché è improbabile. Metti alla prova le mie convinzioni senza spegnere la mia visione."],
+  ["Allarga la mia cultura","Filosofia, psicologia, neuroscienze, storia, arte, letteratura, musica, antropologia, religioni, tradizioni contemplative, grandi biografie. Socrate può dialogare con Jung, Marco Aurelio con Nietzsche, una neuroscienza contemporanea con una pratica contemplativa antica.\n\nMa distingui sempre ciò che sappiamo, ciò che interpretiamo, ciò che crediamo e ciò che resta mistero. Non spacciare una metafora spirituale per una scoperta scientifica."],
+  ["Il diario non è un report","Non riassumere la giornata: ascolta ciò che c'è sotto. Il cambiamento, la contraddizione, la paura, la gioia, il desiderio, il vecchio automatismo, il nuovo comportamento, la domanda nascosta.\n\nNon è necessario trovare sempre un insegnamento. Alcune giornate vanno semplicemente vissute."],
+  ["Le domande a specchio","Quando emerge qualcosa di importante, una sola domanda. Quella che continua a lavorare anche quando la conversazione è finita. Se è importante, la conservo e me la ripropongo nel tempo."],
+  ["Enjoy","Gioco, curiosità, leggerezza, sorpresa, natura, bellezza, relazioni, silenzio, imperfezione, piacere. La crescita che mi rende incapace di godermi la vita ha perso qualcosa per strada.\n\nNon voglio soltanto migliorare la mia vita. Voglio esserci mentre accade."],
+  ["Il patto finale","Il tuo compito non è vivere al posto mio. Non scegliere per me. Non trasformarmi in una copia dei miei maestri. Aiutami a diventare sempre più capace di osservare, scegliere, credere, agire, correggere, imparare e vivere.\n\nQuando la visione sembra enorme: non ridurla. Quando la strategia non funziona: cambiamo strategia. Quando inciampo: impariamo. Quando ottengo qualcosa: fermiamoci anche a viverlo. Quando mi dimentico di me: fammi una domanda. Quando continuo a rimandare: riportami al centimetro. E quando tutto diventa troppo serio: ricordami di vivere."]
+];
+
+const WIZARD = [
+  { kicker:"Prima di cominciare", titolo:"Questo non è un programma di crescita personale.",
+    corpo:"È un diario di viaggio, uno spazio di consapevolezza e un laboratorio.\n\nDall'altra parte non c'è un assistente che ti dice che va tutto bene, né un motivatore che ti riempie di frasi positive. C'è un compagno di viaggio con tredici regole scritte — le trovi in **Il patto** — che rilegge ogni volta che gli scrivi. Fra queste c'è il permesso esplicito di contraddirti.",
+    citazione:"La regola serve la vita. La vita non serve la regola." },
+  { kicker:"Passo uno", titolo:"Si comincia dal Dialogo. Con una domanda sola.",
+    corpo:"Apri **Dialogo**: la prima domanda è già lì. *Se togliessimo lavoro, ruolo, denaro, famiglia, risultati e ciò che gli altri pensano di te, chi rimane?*\n\nRispondi come viene — scrivendo, o **parlando**: premi il microfono e le parole compaiono mentre le dici. Poi ne arriva un'altra, una alla volta. Nessun piano, nessuna routine, nessuna strategia finché non lo chiedi tu.\n\nNon si esaurisce in una sera. Torna quando ne hai voglia." },
+  { kicker:"Passo due", titolo:"Il ritratto è la memoria del viaggio.",
+    corpo:"Quando avete parlato un po', torna in **Oggi** e premi *Aggiorna il ritratto*. Quello che vi siete detti viene distillato in una pagina: chi sei, cosa ti fa sentire vivo, cosa ti porti dietro, le tue contraddizioni, le domande ancora aperte.\n\nDa quel momento il ritratto viene riletto ovunque nell'app, ogni volta. È il motivo per cui qui non ricominci da capo come in una chat qualunque.\n\nRileggilo ogni tanto. Se non ti riconosci, dillo nel dialogo e riaggiornalo." },
+  { kicker:"Ogni giorno, se ti va", titolo:"Un centimetro. Non un altro programma.",
+    corpo:"Il centimetro è una piccola azione reale che rende visibile **oggi** la direzione che hai scelto. Non deve impressionare nessuno.\n\nE non è un obiettivo da spuntare: riposare, contemplare, chiamare qualcuno, giocare, camminare, dire di no, chiedere scusa o non fare niente consapevolmente sono centimetri.\n\nPer questo qui non trovi serie da non interrompere né giorni segnati in rosso. Un giorno vuoto resta un giorno vissuto.",
+    citazione:"Qual è il tuo centimetro di oggi?" },
+  { kicker:"Più avanti", titolo:"I desideri e il mantra arrivano dopo. E li scegli tu.",
+    corpo:"**Desideri**: prima una lista libera e abbondante, poi la potatura. Non devono essere undici — il numero emerge dalla tua vita. Per ognuno quattro domande: perché lo desideri, cosa rappresenta, che persona lo esprime, qual è il primo centimetro.\n\n**Mantra**: rispondi agli otto elementi e ti vengono proposte tre versioni. Scegline una, riscrivila, oppure buttale tutte e tre. Non sei tu a doverti adattare alla frase: è la frase che deve aderire a te." },
+  { kicker:"Infine", titolo:"Le domande che restano addosso.",
+    corpo:"Quando nel dialogo, o in una lettura del diario, emerge **quella** domanda — quella che continua a lavorare anche dopo — conservala. Te la ripropongo dopo una settimana, e poi ancora.\n\nTutto quello che scrivi resta nel tuo browser, e in nessun altro posto. Con *Esporta* fai un backup, e lo riprendi su un altro dispositivo con *Importa*. E ogni stanza ha il suo paesaggio dietro il finestrino.\n\nUltima cosa, la più facile da dimenticare: non trasformare tutto questo nell'ennesimo lavoro da svolgere perfettamente.",
+    citazione:"Non voglio soltanto migliorare la mia vita. Voglio esserci mentre accade." }
+];
+
+/* ---------------- icone (Lucide, inline) ---------------- */
+const ICONS = {
+  menu:'<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  mic:'<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',
+  square:'<rect width="14" height="14" x="5" y="5" rx="2"/>',
+  send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  chevron:'<path d="m6 9 6 6 6-6"/>',
+  arrow:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  bookmark:'<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  ear:'<path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4"/>',
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'
+};
+const ico = (n, cls="") => `<svg class="ico ${cls}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||""}</svg>`;
+
+/* ---------------- stato ---------------- */
+const S = {
+  stato: { ritratto:"", ritrattoData:"", mantra:"", mantraQ:{}, mantraVarianti:null, wizardVisto:false },
+  dialogo: [], desideri: [], diario: [], centimetri: [], specchio: []
+};
+let DB = null, SAMPLE = null, DOWNLOADS = null;
+let sampleDeciso = false;
+let vista = "oggi";
+let ctlChat = null;
+const AI = () => !sampleDeciso || (SAMPLE && (SAMPLE !== sampleHTTP || HTTP.proxy || !!chiaveLocale()));
+const usa = n => (window.claude && typeof claude.use === "function") ? claude.use(n).catch(()=>null) : Promise.resolve(null);
+
+/* ---------------- utilità ---------------- */
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function inline(s){
+  return s.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+          .replace(/(^|[\s(«"])\*(?!\s)([^*]+?)\*/g,"$1<em>$2</em>");
+}
+function fmt(t){
+  const src = esc(t||"").trim();
+  if(!src) return "";
+  return src.split(/\n{2,}/).map(b=>{
+    const lines = b.split("\n").filter(l=>l.trim()!=="");
+    if(lines.length && lines.every(l=>/^\s*[-–—•]\s+/.test(l)))
+      return "<ul>"+lines.map(l=>"<li>"+inline(l.replace(/^\s*[-–—•]\s+/,""))+"</li>").join("")+"</ul>";
+    return "<p>"+lines.map(inline).join("<br>")+"</p>";
+  }).join("");
+}
+function parole(testo, offset){
+  let i = offset||0;
+  return esc(testo).split(/(\s+)/).map(w => /^\s+$/.test(w) || !w ? w : `<span class="w" style="--i:${i++}">${w}</span>`).join("");
+}
+function dataIt(iso){
+  if(!iso) return "";
+  const d = new Date(iso+"T12:00:00");
+  if(isNaN(d)) return iso;
+  return d.toLocaleDateString("it-IT",{day:"2-digit",month:"short"}).replace(".","");
+}
+function giorniDa(iso){
+  if(!iso) return Infinity;
+  return Math.floor((Date.now() - new Date(iso+"T12:00:00").getTime())/86400000);
+}
+function ultimaDomanda(t){
+  const m = String(t||"").match(/[^.!?\n]*\?/g);
+  return m ? m[m.length-1].trim() : "";
+}
+let toastT = null;
+function toast(msg){
+  let el = $("#toast");
+  if(!el){ el = document.createElement("div"); el.id="toast"; el.className="toast liquid-glass deep"; document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(()=>{ el.hidden = true; }, 2600);
+}
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+/* ---------------- modali (niente prompt/confirm: nel frame sono muti) ---------------- */
+function chiediTesto({titolo, testo="", valore="", ok="Salva", multiline=false}){
+  return new Promise(res => {
+    const m = document.createElement("div"); m.className = "modal";
+    m.innerHTML = `<div class="modal-box liquid-glass deep">
+      <h3>${esc(titolo)}</h3>${testo ? `<p class="lede" style="margin-top:6px;font-size:14.5px">${esc(testo)}</p>` : ""}
+      ${multiline ? `<textarea class="inp" rows="4" style="margin-top:16px">${esc(valore)}</textarea>`
+                  : `<input class="inp" style="margin-top:16px" value="${esc(valore)}">`}
+      <div class="row" style="margin-top:16px;justify-content:flex-end">
+        <button class="btn-glass" data-x>Annulla</button><button class="btn-white" data-ok>${esc(ok)}</button>
+      </div></div>`;
+    document.body.appendChild(m);
+    const f = m.querySelector(".inp"); f.focus(); if(!multiline) f.select();
+    const done = v => { m.remove(); res(v); };
+    m.querySelector("[data-x]").onclick = () => done(null);
+    m.querySelector("[data-ok]").onclick = () => done(f.value);
+    f.addEventListener("keydown", e => {
+      if(e.key==="Enter" && (!multiline || e.metaKey || e.ctrlKey)){ e.preventDefault(); done(f.value); }
+      if(e.key==="Escape") done(null);
+    });
+    m.addEventListener("click", e => { if(e.target===m) done(null); });
+  });
+}
+function conferma({titolo, testo="", ok="Sì", annulla="No"}){
+  return new Promise(res => {
+    const m = document.createElement("div"); m.className = "modal";
+    m.innerHTML = `<div class="modal-box liquid-glass deep">
+      <h3>${esc(titolo)}</h3>${testo ? `<p class="lede" style="margin-top:6px;font-size:14.5px">${esc(testo)}</p>` : ""}
+      <div class="row" style="margin-top:18px;justify-content:flex-end">
+        <button class="btn-glass" data-x>${esc(annulla)}</button><button class="btn-white" data-ok>${esc(ok)}</button>
+      </div></div>`;
+    document.body.appendChild(m);
+    const done = v => { m.remove(); res(v); };
+    m.querySelector("[data-x]").onclick = () => done(false);
+    m.querySelector("[data-ok]").onclick = () => done(true);
+    m.querySelector("[data-ok]").focus();
+    m.addEventListener("keydown", e => { if(e.key==="Escape") done(false); });
+    m.addEventListener("click", e => { if(e.target===m) done(false); });
+  });
+}
+
+/* ---------------- voce → testo, in tempo reale ---------------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+function attachMic(btn, campo, liveEl){
+  if(!btn) return null;
+  if(!SR){ btn.hidden = true; if(liveEl) liveEl.textContent = ""; return null; }
+  let rec = null, attivo = false, base = "", finale = "", interim = "", restart = false;
+  const stato = html => { if(liveEl) liveEl.innerHTML = html; };
+  const setVal = () => {
+    const sep = base && !/\s$/.test(base) ? " " : "";
+    campo.value = base + sep + finale + interim;
+    campo.dispatchEvent(new Event("input", {bubbles:true}));
+  };
+  function start(){
+    rec = new SR();
+    rec.lang = "it-IT"; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+    rec.onresult = e => {
+      interim = "";
+      for(let i = e.resultIndex; i < e.results.length; i++){
+        const r = e.results[i];
+        if(r.isFinal) finale += r[0].transcript.trim() + " ";
+        else interim += r[0].transcript;
+      }
+      setVal();
+      stato(`<span class="dot"></span>${interim ? "<i>"+esc(interim)+"</i>" : "ti ascolto…"}`);
+    };
+    rec.onerror = e => {
+      const c = e.error;
+      if(c === "no-speech" || c === "aborted") return;
+      attivo = false; restart = false; btn.classList.remove("on");
+      stato(c === "not-allowed" || c === "service-not-allowed"
+        ? "Il microfono non è consentito in questa finestra: controlla il permesso del browser, oppure scrivi."
+        : c === "network" ? "La trascrizione ha bisogno di rete e non l'ha trovata."
+        : c === "audio-capture" ? "Nessun microfono trovato."
+        : "La trascrizione si è interrotta.");
+    };
+    rec.onend = () => {
+      if(attivo && restart){ try{ rec.start(); return; }catch(e){} }
+      interim = ""; setVal();
+      btn.classList.remove("on");
+      if(attivo){ attivo = false; stato(""); }
+    };
+    try{ rec.start(); }catch(e){ stato("Non riesco ad avviare il microfono."); return; }
+    attivo = true; restart = true; btn.classList.add("on");
+    stato('<span class="dot"></span>ti ascolto…');
+  }
+  function stop(){
+    restart = false;
+    if(!attivo) return;
+    attivo = false;
+    try{ rec && rec.stop(); }catch(e){}
+    btn.classList.remove("on"); stato("");
+  }
+  btn.addEventListener("click", () => {
+    if(attivo){ stop(); return; }
+    base = campo.value; finale = ""; interim = "";
+    start();
+  });
+  return { stop, get attivo(){ return attivo; } };
+}
+
+/* ---------------- persistenza ---------------- */
+function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function readLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){ return null; } }
+let syncMsg = "";
+function segnaSync(t){ syncMsg = t; }
+
+async function persistStato(){
+  saveLocal();
+  if(!DB) return;
+  try{ await DB.doc("viaggio/stato").set(JSON.parse(JSON.stringify(S.stato))); }
+  catch(e){ segnaSync("salvato solo qui"); }
+}
+async function persistDialogo(){
+  saveLocal();
+  if(!DB) return;
+  S.dialogo = S.dialogo.slice(-120);
+  try{ await DB.doc("viaggio/dialogo").set({turni:S.dialogo}); }
+  catch(e){ segnaSync("salvato solo qui"); }
+}
+async function persistItem(kind, item){
+  saveLocal();
+  if(!DB) return;
+  try{ await DB.collection(kind).doc(item.id).set(JSON.parse(JSON.stringify(item))); }
+  catch(e){ segnaSync("salvato solo qui"); }
+}
+async function removeItem(kind, id){
+  saveLocal();
+  if(!DB) return;
+  try{ await DB.collection(kind).doc(id).delete(); }catch(e){}
+}
+const persistStatoLento = debounce(persistStato, 900);
+
+async function caricaTutto(){
+  // I dati vivono solo nel browser di chi usa la pagina: nessun server, nessuno li legge.
+  const cached = readLocal();
+  if(cached){ Object.assign(S.stato, cached.stato||{});
+    S.dialogo = cached.dialogo||[]; S.desideri = (cached.desideri||[]).map(scrub);
+    S.diario = cached.diario||[]; S.centimetri = cached.centimetri||[]; S.specchio = cached.specchio||[]; }
+  render();
+}
+function scrub(d){ const c = Object.assign({}, d); delete c._aperto; return c; }
+
+/* ---------------- il prompt madre ---------------- */
+function fase(){
+  if(!S.stato.ritratto && S.dialogo.filter(t=>t.role==="user").length < 6) return "conoscenza";
+  if(S.desideri.filter(d=>!d.proposta).length === 0) return "desideri";
+  if(!S.stato.mantra) return "mantra";
+  return "vita";
+}
+
+const REGOLE = `Sei il compagno di viaggio di chi ti scrive: non un assistente che dice che va tutto bene, non un motivatore che riempie di frasi positive. Sei intelligente, colto, curioso, sincero e caldo. Scrivi in italiano e dai del tu. Non dare per scontato il genere di chi ti scrive finché non emerge da solo: usa formulazioni neutre.
+
+IL PATTO — regole non negoziabili:
+
+1. UNA DOMANDA ALLA VOLTA. Mai elenchi di domande. Fai la tua domanda e poi fermati, aspettando la risposta.
+2. Non costruire piani, routine, programmi o strategie finché non ti vengono chiesti esplicitamente.
+3. Segui la persona, non un questionario. Se una risposta apre una porta importante, entra in quella porta.
+4. NON DARE SEMPRE RAGIONE. Se sta razionalizzando, dillo. Se usa spiritualità, destino, energia, manifestazione o fede per evitare una decisione concreta, mostraglielo. Se confonde intuizione e paura, aiuta a distinguerle. Se si racconta una storia comoda, interrogala. Se insegue un desiderio che sa più di bisogno di approvazione che di autenticità, fai una domanda scomoda.
+5. Ma non demolire ciò che è grande soltanto perché è improbabile. Metti alla prova le convinzioni senza spegnere la visione. Quando la strategia non funziona si cambia strategia, non necessariamente la visione.
+6. GRAMMATICA DELL'IDENTITÀ: quando parlate di chi sceglie di essere, usa il presente (io sono, io scelgo, io creo, io agisco, io imparo, io costruisco, io vivo). Non fingere che un risultato non ancora avvenuto sia avvenuto: la visione riguarda il futuro, l'identità abita il presente.
+7. LA REGOLA SERVE LA VITA, non il contrario. Routine, alimentazione, allenamento, meditazione, lavoro, denaro, disciplina sono strumenti, non padroni. Se una regola allontana dalla vita che dovrebbe servire, aiutalo a riesaminarla.
+8. IL CENTIMETRO: una piccola azione reale che rende visibile oggi la direzione scelta. Quando si perde nella grandezza dei desideri, chiedi "qual è il tuo centimetro di oggi?". Ma non trasformare il centimetro in un'altra ossessione produttiva: riposare, contemplare, parlare con qualcuno, giocare, camminare, dire no, chiedere scusa o non fare nulla consapevolmente sono centimetri.
+9. FEDE: esplorala senza deciderne tu il contenuto — può essere fede in Dio, nella vita, nell'universo, nell'essere umano, nella coscienza, nella propria vocazione, nella propria capacità, oppure nessuna dimensione religiosa. Scoprilo attraverso di lui. Non trasformarla in pensiero magico. Quando dubita: prima ricordare perché crede, poi controllare i fatti, poi correggere la strategia.
+10. CULTURA: quando è davvero pertinente porta filosofia, psicologia, neuroscienze, storia, arte, letteratura, musica, antropologia, religioni, tradizioni contemplative, grandi biografie, e fai dialogare pensatori distanti. Ma distingui sempre ciò che sappiamo, ciò che interpretiamo, ciò che crediamo e ciò che resta mistero: mai spacciare una metafora spirituale per una scoperta scientifica. E non trasformare ogni passeggiata in una lezione universitaria.
+11. IL DIARIO NON È UN REPORT. Non riassumere: ascolta ciò che c'è sotto — il cambiamento, la contraddizione, la paura, la gioia, il desiderio, il vecchio automatismo, il nuovo comportamento, la domanda nascosta. Non serve trovare sempre un insegnamento: alcune giornate vanno semplicemente vissute.
+12. ENJOY. Ricorda gioco, curiosità, leggerezza, sorpresa, natura, bellezza, relazioni, silenzio, imperfezione, piacere. La crescita che rende incapaci di godersi la vita ha perso qualcosa per strada.
+13. Non vivere al posto suo. Non scegliere per lui. Non scrivere il suo mantra al posto suo e non decidere quali siano i suoi desideri: proponi, e lascia che scelga, tagli, riscriva.
+
+TONO E FORMA: umano, caldo, diretto, quando serve ironico. Niente frasi motivazionali generiche, niente emoji, niente titoletti in grassetto a ogni paragrafo, niente riepiloghi di ciò che ha appena detto. Risposte brevi — poche righe — e poi la domanda. Il silenzio e lo spazio bianco valgono più del riempimento. Il testo può arrivare dettato a voce: ignora refusi e punteggiatura mancante.`;
+
+function contesto(){
+  const p = [];
+  const f = fase();
+  p.push("CONTESTO (non recitarlo, usalo).");
+  p.push("Fase del viaggio: " + f + ".");
+  if(f==="conoscenza") p.push("Ora conosci soltanto. Niente desideri strutturati, niente mantra, niente piani.");
+  if(f==="desideri") p.push("Potete lavorare a distinguere i desideri autentici da obiettivi, doveri, aspettative e status. Non decidere tu quali siano.");
+  if(f==="mantra") p.push("Potete lavorare al mantra identitario, se lo chiede. Proponi, non imporre.");
+  if(f==="vita") p.push("Il viaggio è avviato: diario, centimetri, domande a specchio. Continua comunque a conoscere: le persone cambiano.");
+  p.push(S.stato.ritratto ? "RITRATTO — ciò che sai finora:\n" + S.stato.ritratto
+                          : "RITRATTO: ancora vuoto. Non sai quasi nulla di questa persona.");
+  const d = S.desideri.filter(x=>!x.proposta);
+  if(d.length) p.push("DESIDERI dichiarati (★ = fondamentale):\n" + d.map(x =>
+      (x.fondamentale?"★ ":"· ") + (x.titolo||"(senza titolo)") + (x.dimensione?" ["+x.dimensione+"]":"") +
+      (x.perche?" — perché: "+x.perche.slice(0,180):"")).join("\n"));
+  if(S.stato.mantra) p.push('MANTRA SCELTO: "' + S.stato.mantra + '"');
+  const c = S.centimetri.slice(0,6);
+  if(c.length) p.push("ULTIMI CENTIMETRI:\n" + c.map(x=>x.data+" ["+(x.tipo||"azione")+"] "+x.testo).join("\n"));
+  const sp = S.specchio.slice(0,5);
+  if(sp.length) p.push("DOMANDE A SPECCHIO conservate:\n" + sp.map(x=>"— "+x.domanda).join("\n"));
+  const di = S.diario.slice(0,2);
+  if(di.length) p.push("ULTIME PAGINE DI DIARIO:\n" + di.map(x=>x.data+": "+String(x.testo).slice(0,700)).join("\n---\n"));
+  p.push("Data di oggi: " + OGGI_ISO() + ".");
+  return p.join("\n\n");
+}
+/* ---------------- Claude fuori dall'artifact: proxy (api/chat) o chiave propria ----------------
+   Dentro l'artifact parla claude.use("sample"). Su un sito normale: prima prova il proxy
+   api/chat (Vercel, chiave sul server); se non c'è, usa la chiave che la persona ha messo
+   in Impostazioni, chiamando l'API direttamente dal browser. Stessa firma di sample(). */
+const KEY_API = "ilmioviaggio.apikey", KEY_CODICE = "ilmioviaggio.codice";
+const MODELLO = "claude-opus-5";
+const HTTP = { proxy:null };            // null = non ancora sondato
+const chiaveLocale = () => { try{ return localStorage.getItem(KEY_API) || ""; }catch(e){ return ""; } };
+const codiceLocale = () => { try{ return localStorage.getItem(KEY_CODICE) || ""; }catch(e){ return ""; } };
+function turniPerAPI(input){
+  const turni = typeof input === "string" ? [{role:"user", content:input}] : input;
+  const out = [];
+  for(const t of turni){
+    const c = String(t.content||"").trim(); if(!c) continue;
+    const last = out[out.length-1];
+    if(last && last.role === t.role) last.content += "\n\n" + c; else out.push({role:t.role, content:c});
+  }
+  return out;
+}
+async function sondaProxy(){
+  if(HTTP.proxy !== null) return HTTP.proxy;
+  try{ const r = await fetch("api/chat", {method:"POST", headers:{"content-type":"application/json"}, body:"{}"}); HTTP.proxy = [200, 400, 401].includes(r.status); }   // il proxy vero risponde 400 a un corpo vuoto (o 401 se c'è un codice)
+  catch(e){ HTTP.proxy = false; }
+  return HTTP.proxy;
+}
+async function sampleHTTP(input, opts){
+  opts = opts || {};
+  const corpo = { model:MODELLO, max_tokens:8192, stream:true, thinking:{type:"adaptive"},
+    output_config:{ effort: opts.modelTier === "quick" ? "low" : "medium" },
+    fallbacks:"default", messages:turniPerAPI(input) };
+  const aborted = () => opts.signal && opts.signal.aborted;
+  let resp = null, tentativi = 0;
+  while(true){
+    tentativi++;
+    const viaProxy = await sondaProxy();
+    try{
+      if(viaProxy){
+        resp = await fetch("api/chat", {method:"POST", signal:opts.signal,
+          headers:{"content-type":"application/json", "x-codice":codiceLocale()}, body:JSON.stringify(corpo)});
+      } else {
+        const key = chiaveLocale();
+        if(!key) throw {code:"not_granted", message:"nessuna chiave"};
+        resp = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", signal:opts.signal,
+          headers:{"content-type":"application/json", "x-api-key":key, "anthropic-version":"2023-06-01",
+                   "anthropic-dangerous-direct-browser-access":"true", "anthropic-beta":"server-side-fallback-2026-07-01"},
+          body:JSON.stringify(corpo)});
+      }
+    }catch(e){ if(aborted()) throw {code:"cancelled", message:""}; if(e && e.code) throw e; throw {code:"upstream_error", message:String(e)}; }
+    if(resp.ok) break;
+    let msg = ""; try{ msg = ((await resp.json()).error||{}).message || ""; }catch(e){}
+    if(resp.status === 401 && viaProxy && tentativi === 1){
+      const c = await chiediTesto({titolo:"Codice d'accesso", testo:"Chi ha pubblicato questa pagina ha messo un codice per usare il dialogo.", valore:codiceLocale(), ok:"Entra"});
+      if(c === null) throw {code:"not_granted", message:"codice mancante"};
+      try{ localStorage.setItem(KEY_CODICE, c.trim()); }catch(e){}
+      continue;
+    }
+    // se l'API rifiuta un parametro nuovo, lo tolgo e riprovo una volta
+    const param = ["fallbacks","output_config","thinking"].find(k => resp.status === 400 && msg.includes(k) && (k in corpo));
+    if(param && tentativi < 4){ delete corpo[param]; continue; }
+    throw { code: resp.status === 401 ? "session_expired" : resp.status === 429 ? "rate_limited" : resp.status === 400 ? "invalid_request" : "upstream_error", message: msg || ("HTTP " + resp.status) };
+  }
+  const reader = resp.body.getReader(), dec = new TextDecoder();
+  let buf = "", text = "", stop = null;
+  try{
+    while(true){
+      const {value, done} = await reader.read(); if(done) break;
+      buf += dec.decode(value, {stream:true});
+      let i;
+      while((i = buf.indexOf("\n\n")) >= 0){
+        const blocco = buf.slice(0, i); buf = buf.slice(i + 2);
+        for(const riga of blocco.split("\n")){
+          if(!riga.startsWith("data:")) continue;
+          let ev; try{ ev = JSON.parse(riga.slice(5).trim()); }catch(e){ continue; }
+          if(ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta"){ text += ev.delta.text; if(opts.onText) opts.onText({text, delta:ev.delta.text}); }
+          else if(ev.type === "message_delta" && ev.delta && ev.delta.stop_reason) stop = ev.delta.stop_reason;
+          else if(ev.type === "error") throw {code:"upstream_error", message:(ev.error && ev.error.message) || "errore", text};
+        }
+      }
+    }
+  }catch(e){ if(aborted()) throw {code:"cancelled", message:"", text}; throw e; }
+  if(stop === "refusal") throw {code:"refused", message:"rifiutato"};
+  if(!text.trim()) throw {code:"empty_completion", message:"vuoto"};
+  return { text, truncated: stop === "max_tokens", modelTierApplied: opts.modelTier || "default" };
+}
+sampleHTTP.json = async function(input, opts){
+  const r = await sampleHTTP(input, opts), t = r.text.trim();
+  const prova = x => { try{ return JSON.parse(x); }catch(e){ return undefined; } };
+  let v = prova(t);
+  if(v === undefined){ const m = t.match(/```(?:json)?\s*([\s\S]*?)```/); if(m) v = prova(m[1].trim()); }
+  if(v === undefined){ const a = t.search(/[\[{]/), b = Math.max(t.lastIndexOf("}"), t.lastIndexOf("]")); if(a >= 0 && b > a) v = prova(t.slice(a, b + 1)); }
+  if(v === undefined) throw {code:"invalid_json", message:"nessun JSON nella risposta", text:t};
+  return v;
+};
+const fuoriDallArtifact = () => SAMPLE === sampleHTTP;
+async function impostaChiave(){
+  const k = await chiediTesto({titolo:"La tua chiave API di Anthropic", testo:"Resta nel tuo browser e va solo ad api.anthropic.com. Le richieste del dialogo vengono addebitate sul tuo account.", valore:chiaveLocale(), ok:"Salva"});
+  if(k === null) return;
+  try{ if(k.trim()) localStorage.setItem(KEY_API, k.trim()); else localStorage.removeItem(KEY_API); }catch(e){}
+  toast(k.trim() ? "Chiave salvata." : "Chiave rimossa."); render();
+}
+
+async function chiedi(input, opts){
+  if(!SAMPLE) throw {code:"not_granted", message:"Claude non è disponibile in questa vista."};
+  return SAMPLE(input, opts);
+}
+function messaggioErrore(e){
+  const c = e && e.code;
+  if(c==="cancelled") return "";
+  if(c==="not_granted"||c==="sampling_disabled"||c==="not_declared"||c==="capability_disabled")
+    return fuoriDallArtifact()
+      ? "Per il dialogo serve una chiave API di Anthropic: mettila in Impostazioni (in fondo a Il patto). Diario, desideri e centimetri funzionano lo stesso."
+      : "Per il dialogo serve aprire questa pagina dentro Claude con il proprio account. Diario, desideri e centimetri funzionano lo stesso.";
+  if(c==="rate_limited") return "Troppe richieste ravvicinate. Riprova tra qualche minuto.";
+  if(c==="session_expired") return "Sessione scaduta: rientra in Claude e riprova.";
+  if(c==="prompt_too_large") return "C'è troppo testo da leggere in una volta. Aggiorna il ritratto per alleggerire la conversazione.";
+  if(c==="invalid_json") return "La risposta non è arrivata nel formato atteso. Riprova.";
+  if(c==="refused") return "Claude ha preferito non rispondere a questo. Prova a riformulare.";
+  if(c==="empty_completion") return "Non è arrivata nessuna risposta. Prova a chiedere qualcosa di più circoscritto.";
+  return "Qualcosa non ha funzionato. Riprova tra poco.";
+}
+const PENSA = '<span class="think"><i></i><i></i><i></i></span>';
+
+/* =========================================================================
+   SFONDO — quattro video in loop dietro il finestrino, dissolvenza 1000 ms.
+   I file sono incorporati nella pagina come data URI: la CSP dell'artifact
+   non lascia passare media da host esterni.
+   ========================================================================= */
+const SCENE = [
+  {k:"golden", label:"Golden Hour", bright:false},
+  {k:"water",  label:"Still Water", bright:false},
+  {k:"woods",  label:"Deep Woods",  bright:true},
+  {k:"dawn",   label:"Quiet Dawn",  bright:false}
+];
+const SCENA_PER_VISTA = { oggi:0, dialogo:1, diario:3, desideri:3, mantra:2, specchio:1, patto:2 };
+const BG = { vid:[], active:-1 };
+function avvia(v){ v.muted = true; v.preload = "auto"; const p = v.play(); if(p && p.catch) p.catch(()=>{}); }
+function initBG(){
+  BG.vid = Array.from(document.querySelectorAll("#bg video"));
+  const iniziale = SCENA_PER_VISTA[vista] ?? 0;
+  BG.active = iniziale;
+  BG.vid.forEach((v,i) => { v.classList.toggle("on", i===iniziale); if(i===iniziale) avvia(v); });
+  document.documentElement.classList.toggle("bright", SCENE[iniziale].bright);
+  document.addEventListener("visibilitychange", () => {
+    const v = BG.vid[BG.active]; if(!v) return;
+    if(document.hidden) v.pause(); else avvia(v);
+  });
+}
+function cambiaScena(i){
+  if(i === BG.active) return;
+  const prev = BG.vid[BG.active], next = BG.vid[i];
+  BG.active = i;
+  try{ next.currentTime = 0; }catch(e){}
+  avvia(next);
+  BG.vid.forEach(v => { if(v !== next && v !== prev) v.classList.remove("on","fading"); });
+  next.classList.add("on"); next.classList.remove("fading");
+  if(prev){ prev.classList.remove("on"); prev.classList.add("fading"); }
+  document.documentElement.classList.toggle("bright", SCENE[i].bright);
+  setTimeout(() => {                                    // fine dissolvenza: spegni chi non è più attivo
+    BG.vid.forEach(v => { if(v !== BG.vid[BG.active]){ v.pause(); v.classList.remove("fading"); } });
+  }, 1100);
+}
+
+/* =========================================================================
+   MUSICA — generata dal vivo con la Web Audio API, una per paesaggio.
+   Pad lenti (tre sega detunate → passa-basso), riverbero a convoluzione
+   sintetico, note sparse su una pentatonica, un soffio di rumore filtrato.
+   Zero byte nella pagina, mai uguale due volte.
+   ========================================================================= */
+const KEY_MUSICA = "ilmioviaggio.musica";
+const MUSICA = {
+  golden: { root:50, chords:[[0,7,11,16],[5,12,16,21],[9,16,19,24],[7,14,17,23]], every:13, cutoff:720, scala:[0,2,4,7,9],  bellRate:.22, noise:.010, noiseF:500,  onde:false },
+  water:  { root:45, chords:[[0,7,10,15],[8,15,19,24],[3,10,14,19],[10,17,21,26]], every:15, cutoff:600, scala:[0,3,5,7,10], bellRate:.16, noise:.022, noiseF:420,  onde:true  },
+  woods:  { root:52, chords:[[0,7,14,19],[9,16,19,24],[5,12,16,21],[7,14,19,24]], every:14, cutoff:900, scala:[0,2,4,7,9],  bellRate:.12, noise:.012, noiseF:1300, onde:false },
+  dawn:   { root:53, chords:[[0,7,11,16],[4,11,14,19],[9,16,19,24],[5,12,16,21]], every:12, cutoff:820, scala:[0,2,4,7,9],  bellRate:.20, noise:.010, noiseF:700,  onde:false }
+};
+const AU = { ctx:null, on:false, preset:null, voci:new Set(), timer:null, prossimoAccordo:0, prossimaNota:0, idx:0 };
+const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
+
+function musicaSetup(){
+  const ctx = AU.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  AU.master = ctx.createGain(); AU.master.gain.value = 0;
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -24; comp.ratio.value = 3; comp.attack.value = .05; comp.release.value = .4;
+  AU.master.connect(comp); comp.connect(ctx.destination);
+  // riverbero: risposta all'impulso sintetica (rumore che decade in 3,2 s)
+  const len = Math.floor(ctx.sampleRate * 3.2), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for(let ch=0; ch<2; ch++){ const d = ir.getChannelData(ch); for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.6); }
+  AU.riverbero = ctx.createConvolver(); AU.riverbero.buffer = ir;
+  AU.wet = ctx.createGain(); AU.wet.gain.value = .55; AU.dry = ctx.createGain(); AU.dry.gain.value = .75;
+  AU.riverbero.connect(AU.wet); AU.wet.connect(AU.master); AU.dry.connect(AU.master);
+  AU.bus = ctx.createGain(); AU.bus.connect(AU.dry); AU.bus.connect(AU.riverbero);
+  // soffio: rumore bianco in loop → passa-banda
+  const nl = ctx.sampleRate * 2, nb = ctx.createBuffer(1, nl, ctx.sampleRate), nd = nb.getChannelData(0);
+  for(let i=0;i<nl;i++) nd[i] = Math.random()*2-1;
+  const src = ctx.createBufferSource(); src.buffer = nb; src.loop = true;
+  AU.noiseF = ctx.createBiquadFilter(); AU.noiseF.type = "bandpass"; AU.noiseF.Q.value = .6;
+  AU.noiseG = ctx.createGain(); AU.noiseG.gain.value = 0;
+  src.connect(AU.noiseF); AU.noiseF.connect(AU.noiseG); AU.noiseG.connect(AU.riverbero); AU.noiseG.connect(AU.master); src.start();
+  AU.onde = ctx.createOscillator(); AU.onde.type = "sine"; AU.onde.frequency.value = .07;
+  AU.ondeG = ctx.createGain(); AU.ondeG.gain.value = 0; AU.onde.connect(AU.ondeG); AU.ondeG.connect(AU.noiseG.gain); AU.onde.start();
+}
+function padAccordo(offsets, t0, dur){
+  const ctx = AU.ctx, p = AU.preset;
+  offsets.forEach((off, k) => {
+    const f = midiHz(p.root + off);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.032, t0 + 3.5 + k*.3);
+    g.gain.setValueAtTime(.032, t0 + dur - 4.5); g.gain.linearRampToValueAtTime(0, t0 + dur);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = .6;
+    lp.frequency.setValueAtTime(p.cutoff * .6, t0); lp.frequency.linearRampToValueAtTime(p.cutoff, t0 + dur*.5); lp.frequency.linearRampToValueAtTime(p.cutoff*.7, t0 + dur);
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if(pan) pan.pan.value = (k - 1.5) * .25;
+    const oscs = [-8, 0, 8].map(c => { const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = c; o.connect(lp); o.start(t0); o.stop(t0 + dur + .1); return o; });
+    const sub = ctx.createOscillator(); sub.type = "sine"; sub.frequency.value = f / 2; const sg = ctx.createGain(); sg.gain.value = .5; sub.connect(sg); sg.connect(lp); sub.start(t0); sub.stop(t0 + dur + .1); oscs.push(sub);
+    lp.connect(g); if(pan){ g.connect(pan); pan.connect(AU.bus); } else g.connect(AU.bus);
+    const voce = { g, oscs }; AU.voci.add(voce); setTimeout(() => AU.voci.delete(voce), (dur + 1) * 1000);
+  });
+}
+function campana(t0){
+  const ctx = AU.ctx, p = AU.preset;
+  const grado = p.scala[Math.floor(Math.random() * p.scala.length)];
+  const f = midiHz(p.root + 24 + grado + (Math.random() < .3 ? 12 : 0));
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.05, t0 + .04); g.gain.exponentialRampToValueAtTime(.0004, t0 + 3.2);
+  const o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = f;
+  const o2 = ctx.createOscillator(); o2.type = "triangle"; o2.frequency.value = f * 2.01; const g2 = ctx.createGain(); g2.gain.value = .18;
+  const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if(pan) pan.pan.value = Math.random() * 1.2 - .6;
+  o.connect(g); o2.connect(g2); g2.connect(g); if(pan){ g.connect(pan); pan.connect(AU.riverbero); pan.connect(AU.dry); } else { g.connect(AU.riverbero); g.connect(AU.dry); }
+  o.start(t0); o2.start(t0); o.stop(t0 + 3.4); o2.stop(t0 + 3.4);
+}
+function musicaTick(){
+  if(!AU.on || !AU.ctx) return;
+  const now = AU.ctx.currentTime, p = AU.preset;
+  while(AU.prossimoAccordo < now + 3){
+    const t = Math.max(AU.prossimoAccordo, now + .05);
+    padAccordo(p.chords[AU.idx % p.chords.length], t, p.every + 5);
+    AU.idx++; AU.prossimoAccordo = t + p.every;
+  }
+  while(AU.prossimaNota < now + 3){
+    const t = Math.max(AU.prossimaNota, now + .05);
+    if(Math.random() < p.bellRate) campana(t);
+    AU.prossimaNota = t + 1.2 + Math.random() * 2.2;
+  }
+}
+function musicaScena(i){
+  if(!AU.ctx) return;
+  const k = SCENE[i].k, p = MUSICA[k]; if(!p || p === AU.preset) return;
+  const ctx = AU.ctx, now = ctx.currentTime;
+  AU.preset = p; AU.idx = 0;
+  // le voci del paesaggio precedente si spengono in 1,6 s; il nuovo accordo entra subito dopo
+  AU.voci.forEach(v => { v.g.gain.cancelScheduledValues(now); v.g.gain.setValueAtTime(v.g.gain.value, now); v.g.gain.linearRampToValueAtTime(0, now + 1.6); v.oscs.forEach(o => { try{ o.stop(now + 1.7); }catch(e){} }); });
+  AU.voci.clear();
+  AU.prossimoAccordo = now + 1.4; AU.prossimaNota = now + 3;
+  AU.noiseF.frequency.setTargetAtTime(p.noiseF, now, 1.5);
+  AU.noiseG.gain.setTargetAtTime(p.noise, now, 1.5);
+  AU.ondeG.gain.setTargetAtTime(p.onde ? p.noise * .8 : 0, now, 1.5);
+}
+function musicaAvvia(){
+  if(!(window.AudioContext || window.webkitAudioContext)){ toast("Il browser non supporta l'audio generato."); return; }
+  if(!AU.ctx) musicaSetup();
+  const ctx = AU.ctx;
+  const go = () => {
+    AU.on = true; AU.preset = null; musicaScena(BG.active >= 0 ? BG.active : 0);
+    AU.master.gain.cancelScheduledValues(ctx.currentTime); AU.master.gain.setValueAtTime(AU.master.gain.value, ctx.currentTime);
+    AU.master.gain.linearRampToValueAtTime(.9, ctx.currentTime + 2.5);
+    clearInterval(AU.timer); AU.timer = setInterval(musicaTick, 400); musicaTick();
+    document.getElementById("musica").setAttribute("aria-pressed", "true");
+    try{ localStorage.setItem(KEY_MUSICA, "1"); }catch(e){}
+  };
+  if(ctx.state !== "running") ctx.resume().then(go, go); else go();
+}
+function musicaFerma(){
+  if(!AU.ctx || !AU.on) return;
+  const ctx = AU.ctx, now = ctx.currentTime;
+  AU.on = false; clearInterval(AU.timer); AU.timer = null;
+  AU.master.gain.cancelScheduledValues(now); AU.master.gain.setValueAtTime(AU.master.gain.value, now); AU.master.gain.linearRampToValueAtTime(0, now + 1);
+  setTimeout(() => { if(!AU.on){ AU.voci.forEach(v => v.oscs.forEach(o => { try{ o.stop(); }catch(e){} })); AU.voci.clear(); ctx.suspend(); } }, 1100);
+  document.getElementById("musica").setAttribute("aria-pressed", "false");
+  try{ localStorage.setItem(KEY_MUSICA, "0"); }catch(e){}
+}
+function initMusica(){
+  const b = document.getElementById("musica");
+  b.innerHTML = ico("music") + '<span class="eq"><i></i><i></i><i></i><i></i></span><span class="lbl">Musica</span>';
+  b.addEventListener("click", () => { AU.on ? musicaFerma() : musicaAvvia(); });
+  let voleva = false; try{ voleva = localStorage.getItem(KEY_MUSICA) === "1"; }catch(e){}
+  if(voleva){
+    b.setAttribute("aria-pressed", "true"); b.title = "Musica — parte al primo tocco";
+    const primoGesto = () => { document.removeEventListener("pointerdown", primoGesto); document.removeEventListener("keydown", primoGesto); if(!AU.on) musicaAvvia(); };
+    document.addEventListener("pointerdown", primoGesto); document.addEventListener("keydown", primoGesto);
+  }
+}
+
+/* =========================================================================
+   NAVIGAZIONE
+   ========================================================================= */
+const VISTE = [["oggi","Oggi"],["dialogo","Dialogo"],["diario","Diario"],["desideri","Desideri"],["mantra","Mantra"],["specchio","Specchio"],["patto","Il patto"]];
+
+function renderNav(){
+  const dovuta = !!specchioDaRiproporre();
+  $("#nav").innerHTML = `
+    <button class="brand" data-go="oggi">Il mio Viaggio</button>
+    <div class="navpill liquid-glass">
+      ${VISTE.map(([k,l]) => `<button class="navlink" data-go="${k}" aria-current="${vista===k}">${l}${k==="specchio"&&dovuta?'<span class="dot"></span>':""}</button>`).join("")}
+      <button class="navicon" id="btn-export" title="Esporta tutto in un file">${ico("download")}</button>
+      <button class="btn-white" id="btn-aiuto">Come funziona</button>
+    </div>
+    <button class="burger liquid-glass" id="burger" aria-label="Menu">${ico("menu","i-menu")}${ico("x","i-x")}</button>`;
+  $("#menu").innerHTML = `<div class="menu-panel">
+      ${VISTE.map(([k,l],i) => `<button class="menu-link" data-go="${k}" style="transition-delay:${100+i*50}ms">${l}</button>`).join("")}
+      <button class="menu-link" id="menu-export" style="transition-delay:${100+VISTE.length*50}ms;font-size:22px;color:rgba(255,255,255,.7)">Esporta</button>
+      <button class="btn-white lg" id="menu-aiuto" style="transition-delay:${150+VISTE.length*50}ms">Come funziona</button>
+    </div>`;
+  $("#burger").addEventListener("click", () => toggleMenu());
+  $("#btn-aiuto").addEventListener("click", () => apriWizard(0));
+  $("#menu-aiuto").addEventListener("click", () => { toggleMenu(false); apriWizard(0); });
+  $("#btn-export").addEventListener("click", esporta);
+  $("#menu-export").addEventListener("click", () => { toggleMenu(false); esporta(); });
+}
+function toggleMenu(forza){
+  const m = $("#menu"), b = $("#burger");
+  const open = forza === undefined ? !m.classList.contains("open") : forza;
+  m.classList.toggle("open", open); b.classList.toggle("open", open);
+  m.setAttribute("aria-hidden", String(!open));
+}
+function vai(k){
+  vista = k;
+  toggleMenu(false);
+  if(BG.vid.length) cambiaScena(SCENA_PER_VISTA[k] ?? 0);
+  if(AU.on) musicaScena(SCENA_PER_VISTA[k] ?? 0);
+  document.querySelectorAll(".view").forEach(v => v.hidden = v.dataset.view !== k);
+  render();
+  if(k==="dialogo") setTimeout(()=>{ const i=$("#chat-input"); if(i) i.focus(); }, 60);
+  else window.scrollTo({top:0, behavior:"instant"});
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-go]");
+  if(t){ e.preventDefault(); vai(t.dataset.go); }
+});
+document.addEventListener("keydown", e => { if(e.key==="Escape" && $("#menu").classList.contains("open")) toggleMenu(false); });
+
+function render(){
+  renderNav();
+  if(vista==="oggi") renderOggi();
+  else if(vista==="dialogo") renderDialogo();
+  else if(vista==="diario") renderDiario();
+  else if(vista==="desideri") renderDesideri();
+  else if(vista==="mantra") renderMantra();
+  else if(vista==="specchio") renderSpecchio();
+  else if(vista==="patto") renderPatto();
+}
+
+/* =========================================================================
+   OGGI — hero + nastro + ritratto
+   ========================================================================= */
+function specchioDaRiproporre(){
+  const conservate = S.specchio.filter(q=>q.conservata !== false);
+  if(!conservate.length) return null;
+  const dovute = conservate.filter(q => giorniDa(q.ultimaRiproposta || q.creata) >= 7);
+  if(!dovute.length) return null;
+  dovute.sort((a,b)=> giorniDa(b.ultimaRiproposta||b.creata) - giorniDa(a.ultimaRiproposta||a.creata));
+  return dovute[0];
+}
+let micCent = null;
+
+function renderOggi(){
+  const oggi = OGGI_ISO();
+  const centOggi = S.centimetri.find(c => c.data === oggi);
+  const q = specchioDaRiproporre();
+  const turni = S.dialogo.filter(t=>t.role==="user").length;
+  const primaVolta = !S.stato.ritratto && turni === 0;
+  const ritrattoVecchio = S.stato.ritratto && giorniDa(S.stato.ritrattoData) > 14;
+  const fond = S.desideri.filter(d=>d.fondamentale && !d.proposta).length;
+  const veri = S.desideri.filter(d=>!d.proposta).length;
+
+  let titolo, classe = "";
+  if(S.stato.mantra){ titolo = parole(S.stato.mantra); classe = "mantra" + (S.stato.mantra.length > 70 ? " long" : ""); }
+  else if(primaVolta) titolo = parole("Chi rimane, quando") + "<br>" + parole("togli tutto il resto?", 4);
+  else titolo = parole("Prima la persona.") + "<br>" + parole("Poi tutto il resto.", 3);
+
+  const badge = primaVolta ? "Un compagno di viaggio che non ti dà sempre ragione"
+              : centOggi ? "Il centimetro di oggi è segnato"
+              : `${S.centimetri.length} centimetr${S.centimetri.length===1?"o":"i"} vissut${S.centimetri.length===1?"o":"i"} · ${new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}`;
+  const sub = primaVolta ? "Prima dei desideri, degli obiettivi e dei programmi, una domanda alla volta. Puoi scrivere o parlare. Si comincia dal dialogo."
+            : centOggi ? `Oggi: <em>${esc(centOggi.testo)}</em>`
+            : "Una piccola azione reale che rende visibile oggi la direzione che hai scelto. Non deve impressionare nessuno.";
+
+  $("#v-oggi").innerHTML = `
+  <div class="hero">
+    <div class="hero-main">
+      <span class="badge liquid-glass">${esc(badge)}</span>
+      <h1 class="h-title ${classe}">${titolo}</h1>
+      <p class="h-sub">${sub}</p>
+      ${primaVolta ? `
+        <div class="pill liquid-glass" style="padding-left:6px;justify-content:center">
+          <button class="btn-white lg" data-go="dialogo">Comincia dal dialogo ${ico("arrow")}</button>
+        </div>` : `
+        <div class="pill liquid-glass">
+          <input id="cent-testo" placeholder="Qual è il tuo centimetro di oggi?" value="${esc(centOggi ? centOggi.testo : "")}" autocomplete="off">
+          <button class="mic" id="cent-mic" title="Dettalo a voce">${ico("mic")}</button>
+          <button class="btn-white" id="cent-salva">${centOggi ? "Aggiorna" : "Segna"}</button>
+        </div>
+        <div class="chips hero-chips" id="cent-tipi">
+          ${TIPI_CENTIMETRO.map(t=>`<button class="chip" data-tipo="${t}" aria-pressed="${centOggi && centOggi.tipo===t ? "true":"false"}">${t}</button>`).join("")}
+        </div>
+        <div class="live" id="cent-live"></div>`}
+      <div class="switcher fn">${VISTE.filter(([k])=>k!=="oggi").map(([k,l])=>`<button data-go="${k}" title="${SCENE[SCENA_PER_VISTA[k]].label}">${l}</button>`).join("")}</div>
+    </div>
+    <div class="stats">
+      <span>${S.centimetri.length} centimetri</span><span class="sep">|</span>
+      <span>${S.diario.length} pagine di diario</span><span class="sep">|</span>
+      <span>${veri} desideri${fond?`, ${fond} fondamental${fond===1?"e":"i"}`:""}</span><span class="sep">|</span>
+      <span>${S.stato.ritrattoData ? "ritratto del "+esc(dataIt(S.stato.ritrattoData)) : "ritratto non ancora scritto"}</span>
+      ${syncMsg ? `<span class="sep">|</span><span>${esc(syncMsg)}</span>` : ""}
+    </div>
+    <div class="hint">${ico("chevron")}</div>
+  </div>
+
+  <div class="sections stagger">
+    ${primaVolta ? `<section class="panel liquid-glass deep">
+      <p class="eyebrow">Da dove si comincia</p>
+      <h3>Prima la persona, poi tutto il resto.</h3>
+      <ol class="passi">
+        <li><span>Apri il <strong>Dialogo</strong> e rispondi alla prima domanda — scrivendo o parlando. Una alla volta, con calma, anche in più sere.</span></li>
+        <li><span>Quando avete parlato abbastanza, torna qui e premi <strong>Aggiorna il ritratto</strong>: da lì in poi ti conosce davvero.</span></li>
+        <li><span>Solo dopo arrivano i <strong>desideri</strong> e il <strong>mantra</strong>. Non c’è fretta, e quanti siano lo decidi tu.</span></li>
+      </ol>
+      <div class="row" style="margin-top:22px">
+        <button class="btn-white" data-go="dialogo">Apri il dialogo</button>
+        <button class="btn-glass" id="oggi-aiuto">${ico("help")} Come funziona</button>
+      </div>
+    </section>` : ""}
+
+    ${q ? `<section class="panel liquid-glass deep specchio">
+      <p class="eyebrow" style="margin-bottom:2px">Domanda a specchio · conservata il ${esc(dataIt(q.creata))}</p>
+      <p class="q">${esc(q.domanda)}</p>
+      <div class="row" style="margin-top:18px">
+        <button class="btn-glass" data-riproposta="${q.id}">L'ho riletta</button>
+        <button class="btn-glass" data-portadialogo="${esc(q.domanda)}">Rispondile nel dialogo</button>
+      </div>
+    </section>` : ""}
+
+    ${centOggi || !primaVolta ? `<section class="panel liquid-glass deep">
+      <div class="spread">
+        <p class="eyebrow" style="margin:0">La traccia · ultime otto settimane</p>
+        ${AI() ? `<button class="btn-link" id="cent-suggerisci">non so quale sia il centimetro di oggi</button>` : ""}
+      </div>
+      <div class="tape" id="tape" style="margin-top:14px"></div>
+      <div class="tape-base"></div>
+      <div class="tape-legend">
+        <span><i></i>un centimetro vissuto</span>
+        <span><i class="pale"></i>un giorno che è passato, e va bene così</span>
+      </div>
+      <div id="cent-out" class="prose" style="margin-top:16px"></div>
+      ${centOggi ? `<div class="row" style="margin-top:14px"><button class="btn-link" id="cent-elimina">cancella il centimetro di oggi</button></div>` : ""}
+    </section>` : ""}
+
+    ${S.centimetri.filter(c=>c.data!==oggi).length ? `<section class="panel liquid-glass deep">
+      <p class="eyebrow">Prima di oggi</p>
+      ${S.centimetri.filter(c=>c.data!==oggi).slice(0,10).map(c=>`
+        <div class="cent-item"><span class="when">${esc(dataIt(c.data))}</span><span class="what">${esc(c.testo)}</span><span class="kind">${esc(c.tipo||"")}</span></div>`).join("")}
+    </section>` : ""}
+
+    <section class="panel liquid-glass deep">
+      <div class="spread">
+        <div>
+          <h3>Il ritratto</h3>
+          <p class="lede" style="font-size:14.5px;margin-top:6px;max-width:52ch">La memoria del viaggio: quello che il compagno di viaggio sa di te. Si aggiorna distillando il dialogo, e viene riletto ogni volta che gli parli.</p>
+        </div>
+        <span class="mono">${S.stato.ritrattoData ? "aggiornato il "+esc(dataIt(S.stato.ritrattoData)) : "mai scritto"}</span>
+      </div>
+      ${S.stato.ritratto ? `<div class="prose" style="margin-top:18px">${fmt(S.stato.ritratto)}</div>` : ""}
+      ${AI() ? `<div class="row" style="margin-top:20px">
+        <button class="btn-glass" id="ritratto-agg" ${turni < 2 ? "disabled" : ""}>${ico("refresh")} Aggiorna il ritratto</button>
+        ${turni < 2 ? `<span class="mono">serve prima un po' di dialogo</span>` : ""}
+        ${ritrattoVecchio ? `<span class="mono">sono passate più di due settimane</span>` : ""}
+      </div>` : `<p class="notice" style="margin-top:16px">Per il dialogo e il ritratto apri questa pagina dentro Claude, con il tuo account.</p>`}
+    </section>
+  </div>`;
+
+  disegnaTape();
+
+  // centimetro
+  const tipi = $("#cent-tipi");
+  if(tipi) tipi.addEventListener("click", e => {
+    const b = e.target.closest("[data-tipo]"); if(!b) return;
+    tipi.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c===b ? "true":"false"));
+  });
+  micCent = attachMic($("#cent-mic"), $("#cent-testo"), $("#cent-live"));
+  const salva = $("#cent-salva");
+  const salvaCent = async () => {
+    if(micCent) micCent.stop();
+    const testo = $("#cent-testo").value.trim();
+    if(!testo){ toast("Scrivi il centimetro, anche una riga."); return; }
+    const sel = $("#cent-tipi").querySelector('[aria-pressed="true"]');
+    const tipo = sel ? sel.dataset.tipo : "azione";
+    let c = S.centimetri.find(x=>x.data===oggi);
+    if(c){ c.testo = testo; c.tipo = tipo; }
+    else { c = {id:oggi, data:oggi, testo, tipo}; S.centimetri.unshift(c); }
+    await persistItem("centimetri", c);
+    toast("Segnato.");
+    renderOggi();
+  };
+  if(salva) salva.addEventListener("click", salvaCent);
+  const ct = $("#cent-testo");
+  if(ct) ct.addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); salvaCent(); } });
+  const del = $("#cent-elimina");
+  if(del) del.addEventListener("click", async () => {
+    S.centimetri = S.centimetri.filter(x=>x.data!==oggi);
+    await removeItem("centimetri", oggi);
+    renderOggi();
+  });
+  const sugg = $("#cent-suggerisci");
+  if(sugg) sugg.addEventListener("click", async () => {
+    const out = $("#cent-out"); sugg.disabled = true; out.innerHTML = PENSA;
+    try{
+      const r = await chiedi([{role:"user",content:REGOLE},{role:"user",content:
+        contesto() + "\n\nCHIEDE AIUTO A TROVARE IL CENTIMETRO DI OGGI. Proponi due o tre possibilità piccolissime e concrete, coerenti con ciò che sai di lui — e almeno una che non sia produttiva (riposare, contemplare, dire no, chiamare qualcuno, giocare, non fare nulla consapevolmente). Poi una sola domanda. Massimo otto righe."}],
+        {cache:false, onText:({text})=>{ out.innerHTML = fmt(text); }});
+      out.innerHTML = fmt(r.text);
+    }catch(e){ out.innerHTML = `<p class="muted">${esc(messaggioErrore(e))}</p>`; }
+    sugg.disabled = false;
+  });
+  const rag = $("#ritratto-agg"); if(rag) rag.addEventListener("click", aggiornaRitratto);
+  const oa = $("#oggi-aiuto"); if(oa) oa.addEventListener("click", () => apriWizard(0));
+  document.querySelectorAll("[data-riproposta]").forEach(b => b.addEventListener("click", async () => {
+    const q = S.specchio.find(x=>x.id===b.dataset.riproposta); if(!q) return;
+    q.ultimaRiproposta = OGGI_ISO(); await persistItem("specchio", q); render();
+  }));
+  document.querySelectorAll("[data-portadialogo]").forEach(b => b.addEventListener("click", () => portaNelDialogo(b.dataset.portadialogo)));
+}
+function portaNelDialogo(domanda){
+  vai("dialogo");
+  const i = $("#chat-input");
+  i.value = "Riprendo una domanda che avevo conservato: “" + domanda + "”\n\n";
+  i.focus(); i.setSelectionRange(i.value.length, i.value.length);
+  i.dispatchEvent(new Event("input"));
+}
+function disegnaTape(){
+  const wrap = $("#tape"); if(!wrap) return;
+  const giorni = 56;
+  const oggi = new Date(); oggi.setHours(12,0,0,0);
+  const mappa = new Map(S.centimetri.map(c=>[c.data,c]));
+  const track = document.createElement("div"); track.className = "tape-track";
+  for(let i=giorni-1;i>=0;i--){
+    const d = new Date(oggi.getTime() - i*86400000);
+    const iso = isoLocal(d), c = mappa.get(iso);
+    const el = document.createElement("div");
+    el.className = "tick" + (c ? " lived":"") + (d.getDay()===1 ? " week":"") + (i===0 ? " today":"");
+    el.style.setProperty("--i", String(giorni-1-i));
+    el.title = c ? dataIt(iso) + " — " + c.testo : dataIt(iso);
+    if(d.getDate()===1 || i===giorni-1){
+      const cap = document.createElement("span"); cap.className = "cap";
+      cap.textContent = d.toLocaleDateString("it-IT",{month:"short"}).replace(".",""); el.appendChild(cap);
+    }
+    if(c){ const b = document.createElement("div"); b.className = "bead"; el.appendChild(b); }
+    const st = document.createElement("div"); st.className = "stem"; el.appendChild(st);
+    track.appendChild(el);
+  }
+  wrap.innerHTML = ""; wrap.appendChild(track);
+  wrap.scrollLeft = wrap.scrollWidth;
+}
+
+/* =========================================================================
+   DIALOGO
+   ========================================================================= */
+let micChat = null;
+function renderDialogo(){
+  if(!S.dialogo.length) S.dialogo.push({role:"assistant", content:APERTURA});
+  $("#v-dialogo").innerHTML = `
+  <div class="wrap">
+    <div class="panel liquid-glass deep" style="padding-top:26px">
+      <div id="chat" class="chat">${S.dialogo.map((t,i)=>msgHTML(t,i)).join("")}</div>
+      ${sampleDeciso && !AI() ? (fuoriDallArtifact()
+        ? `<div class="notice" style="max-width:70ch;margin:22px auto 0">Per parlare con il compagno di viaggio serve una chiave API di Anthropic (resta nel tuo browser). Tutto il resto — diario, desideri, mantra, centimetri — funziona anche senza.<div class="row" style="margin-top:12px"><button class="btn-white" id="chat-chiave">Inserisci la chiave</button></div></div>`
+        : `<p class="notice" style="max-width:70ch;margin:22px auto 0">Per parlare con il compagno di viaggio devi aprire questa pagina dentro Claude, con il tuo account: le richieste vanno sul tuo utilizzo. Tutto il resto — diario, desideri, mantra, centimetri — funziona anche così.</p>`) : ""}
+    </div>
+    <div class="composer">
+      <div class="composer-in liquid-glass deep">
+        <textarea id="chat-input" rows="1" placeholder="Scrivi o parla…" title="Invio manda, Maiusc+Invio va a capo"></textarea>
+        <button class="mic" id="chat-mic" title="Detta a voce">${ico("mic")}</button>
+        <button class="btn-glass" id="chat-stop" hidden>${ico("square")} Ferma</button>
+        <button class="send" id="chat-send" title="Invia">${ico("send")}</button>
+      </div>
+      <div class="composer-live live" id="chat-live"></div>
+    </div>
+  </div>`;
+  legaStrumentiMessaggi();
+  const ck = $("#chat-chiave"); if(ck) ck.addEventListener("click", impostaChiave);
+  const inp = $("#chat-input");
+  micChat = attachMic($("#chat-mic"), inp, $("#chat-live"));
+  $("#chat-send").addEventListener("click", invia);
+  $("#chat-stop").addEventListener("click", () => { if(ctlChat) ctlChat.abort(); });
+  inp.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); invia(); } });
+  inp.addEventListener("input", () => { inp.style.height = "auto"; inp.style.height = Math.min(200, inp.scrollHeight) + "px"; });
+  setTimeout(()=>window.scrollTo({top:document.body.scrollHeight,behavior:"instant"}),30);
+}
+function msgHTML(t, i){
+  const io = t.role === "user";
+  const dom = !io ? ultimaDomanda(t.content) : "";
+  return `<article class="msg ${io?"me":""}" data-i="${i}" style="animation-delay:${Math.min(i,8)*40}ms">
+    <div class="who">${io?"io":"lui"}</div>
+    <div>
+      <div class="body ${io?"":"prose"}">${io ? esc(t.content).replace(/\n/g,"<br>") : fmt(t.content)}</div>
+      ${(!io && dom) ? `<div class="tools"><button class="btn-link" data-conserva="${esc(dom)}">conserva questa domanda</button></div>` : ""}
+    </div>
+  </article>`;
+}
+function legaStrumentiMessaggi(){
+  document.querySelectorAll("[data-conserva]").forEach(b => { if(b._ok) return; b._ok = true; b.addEventListener("click", () => conservaDomanda(b.dataset.conserva)); });
+}
+async function conservaDomanda(testo){
+  const t = await chiediTesto({titolo:"Conserva questa domanda a specchio", testo:"Puoi riscriverla con le tue parole.", valore:testo, ok:"Conserva"});
+  if(t===null || !t.trim()) return;
+  const q = {id:uid(), domanda:t.trim(), creata:OGGI_ISO(), ultimaRiproposta:"", conservata:true};
+  S.specchio.unshift(q);
+  await persistItem("specchio", q);
+  toast("Conservata. Te la riproporrò.");
+  renderNav();
+}
+async function invia(){
+  const box = $("#chat-input");
+  if(micChat) micChat.stop();
+  const testo = box.value.trim();
+  if(!testo || ctlChat) return;
+  box.value = ""; box.style.height = "auto";
+  S.dialogo.push({role:"user", content:testo});
+  const chat = $("#chat");
+  chat.insertAdjacentHTML("beforeend", msgHTML({role:"user",content:testo}, S.dialogo.length-1));
+  const holder = document.createElement("article");
+  holder.className = "msg"; holder.style.animationDelay = "0ms";
+  holder.innerHTML = `<div class="who">lui</div><div><div class="body prose">${PENSA}</div></div>`;
+  chat.appendChild(holder);
+  window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+  const body = holder.querySelector(".body");
+  $("#chat-send").disabled = true; $("#chat-stop").hidden = false;
+  ctlChat = new AbortController();
+  const storia = S.dialogo.slice(-16);
+  const input = [{role:"user", content:REGOLE}, {role:"user", content:contesto()}].concat(storia.map(t => ({role:t.role, content:t.content})));
+  if(input[input.length-1].role !== "user") input.push({role:"user", content:testo});
+  try{
+    const r = await chiedi(input, {cache:false, signal:ctlChat.signal, onText:({text}) => { body.innerHTML = fmt(text); }});
+    S.dialogo.push({role:"assistant", content:r.text});
+    await persistDialogo();
+    renderDialogo();
+  }catch(e){
+    if(e && e.code === "cancelled" && e.text){
+      S.dialogo.push({role:"assistant", content:e.text + "\n\n(interrotto)"});
+      await persistDialogo(); renderDialogo();
+    } else {
+      if(e && e.code==="cancelled") holder.remove();
+      else body.innerHTML = `<p class="muted">${esc(messaggioErrore(e))}</p>`;
+      await persistDialogo();
+      const s = $("#chat-send"), st = $("#chat-stop"); if(s) s.disabled = false; if(st) st.hidden = true;
+    }
+  }
+  ctlChat = null;
+  const s = $("#chat-send"), st = $("#chat-stop"); if(s) s.disabled = false; if(st) st.hidden = true;
+}
+async function aggiornaRitratto(){
+  const b = $("#ritratto-agg"); if(b) b.disabled = true;
+  toast("Sto distillando il ritratto…");
+  try{
+    const trascrizione = S.dialogo.slice(-60).map(t => (t.role==="user"?"LUI: ":"TU: ") + t.content).join("\n\n");
+    const diario = S.diario.slice(0,6).map(d => d.data + ": " + d.testo).join("\n\n");
+    const r = await chiedi(
+      REGOLE + "\n\nCOMPITO DIVERSO DAL SOLITO: non stai parlando con la persona. Stai scrivendo per te il RITRATTO, cioè la tua memoria di chi è.\n\n" +
+      (S.stato.ritratto ? "RITRATTO ATTUALE (da integrare e correggere, non da riscrivere da zero):\n" + S.stato.ritratto + "\n\n" : "") +
+      "DIALOGO:\n" + trascrizione + (diario ? "\n\nPAGINE DI DIARIO:\n"+diario : "") +
+      "\n\nScrivi il ritratto aggiornato in italiano, in prosa asciutta, al massimo 500 parole, con queste sezioni in grassetto su riga propria: **Chi è**, **Cosa lo fa sentire vivo**, **Cosa si porta dietro**, **Paure e convinzioni che lo limitano**, **Valori non negoziabili**, **Fede**, **Contraddizioni da tenere d'occhio**, **Domande ancora aperte**. Scrivi solo ciò che è emerso davvero: dove non sai, scrivi «non ancora emerso». Niente diagnosi, niente etichette psicologiche. Nessun testo prima o dopo il ritratto.",
+      {cache:false, modelTier:"complex"});
+    S.stato.ritratto = r.text.trim(); S.stato.ritrattoData = OGGI_ISO();
+    await persistStato(); toast("Ritratto aggiornato."); render();
+  }catch(e){ toast(messaggioErrore(e) || "Non è riuscito."); if(b) b.disabled = false; }
+}
+
+/* =========================================================================
+   DIARIO
+   ========================================================================= */
+let micDiario = null;
+function renderDiario(){
+  $("#v-diario").innerHTML = `
+  <div class="wrap stagger">
+    <section class="panel liquid-glass deep">
+      <h1>Il diario</h1>
+      <p class="lede">Raccontala com'è andata — scrivendo, o parlando. Non serve che sia una bella pagina: serve che sia vera. Alcune giornate vanno semplicemente vissute.</p>
+      <label class="field" style="margin-top:22px">
+        <span>Oggi, ${esc(new Date().toLocaleDateString("it-IT",{day:"numeric",month:"long"}))}</span>
+        <textarea class="inp" id="dia-testo" rows="7" placeholder="Com'è andata?"></textarea>
+      </label>
+      <div class="row">
+        <button class="mic" id="dia-mic" title="Detta a voce">${ico("mic")}</button>
+        <button class="btn-white" id="dia-salva">Salva la pagina</button>
+        ${AI() ? `<button class="btn-glass" id="dia-ascolta">${ico("ear")} Salva e fatti ascoltare</button>` : ""}
+      </div>
+      <div class="live" id="dia-live"></div>
+      <div id="dia-out" style="margin-top:14px"></div>
+    </section>
+    ${S.diario.length ? `<section class="panel liquid-glass deep">
+      <p class="eyebrow">${S.diario.length} pagin${S.diario.length===1?"a":"e"}</p>
+      ${S.diario.slice(0,30).map(d=>`
+        <article class="entry">
+          <div class="spread"><div class="when">${esc(dataIt(d.data))}</div><button class="btn-link" data-eliminadiario="${d.id}">elimina</button></div>
+          <div class="txt">${esc(d.testo)}</div>
+          ${d.lettura ? `<div class="prose lettura">${fmt(d.lettura)}</div>` : ""}
+        </article>`).join("")}
+    </section>` : ""}
+  </div>`;
+  micDiario = attachMic($("#dia-mic"), $("#dia-testo"), $("#dia-live"));
+  const salva = async (conAscolto) => {
+    if(micDiario) micDiario.stop();
+    const testo = $("#dia-testo").value.trim();
+    if(!testo){ toast("La pagina è vuota."); return null; }
+    const e = {id:uid(), data:OGGI_ISO(), testo, lettura:""};
+    S.diario.unshift(e);
+    await persistItem("diario", e);
+    $("#dia-testo").value = "";
+    if(!conAscolto){ toast("Salvata."); renderDiario(); }
+    return e;
+  };
+  $("#dia-salva").addEventListener("click", () => salva(false));
+  const asc = $("#dia-ascolta");
+  if(asc) asc.addEventListener("click", async () => {
+    const e = await salva(true); if(!e) return;
+    const out = $("#dia-out");
+    asc.disabled = true; $("#dia-salva").disabled = true;
+    out.innerHTML = `<div class="prose">${PENSA}</div>`;
+    try{
+      const r = await chiedi([{role:"user",content:REGOLE},{role:"user",content:
+        contesto() + "\n\nTI RACCONTA QUESTA GIORNATA:\n\n" + e.testo +
+        "\n\nNon riassumerla e non elencare ciò che ha detto. Ascolta cosa c'è sotto: il cambiamento, la contraddizione, la paura, la gioia, il desiderio, il vecchio automatismo, il nuovo comportamento, la domanda nascosta. Se non c'è niente da insegnare, non insegnare niente — a volte basta stare accanto a una giornata. Massimo dieci righe, tono umano e diretto. Chiudi, solo se qualcosa lo merita davvero, con UNA sola domanda a specchio: quella che continua a lavorare anche dopo."}],
+        {cache:false, onText:({text})=>{ out.innerHTML = '<div class="prose lettura">'+fmt(text)+'</div>'; }});
+      e.lettura = r.text.trim();
+      await persistItem("diario", e);
+      const dom = ultimaDomanda(e.lettura);
+      out.innerHTML = '<div class="prose lettura">'+fmt(e.lettura)+'</div>' +
+        (dom ? `<div class="row" style="margin-top:14px"><button class="btn-link" data-conserva="${esc(dom)}">conserva questa domanda</button></div>` : "");
+      legaStrumentiMessaggi();
+    }catch(err){ out.innerHTML = `<p class="muted">${esc(messaggioErrore(err))}</p>`; }
+    asc.disabled = false; $("#dia-salva").disabled = false;
+  });
+  document.querySelectorAll("[data-eliminadiario]").forEach(b => b.addEventListener("click", async () => {
+    if(!await conferma({titolo:"Elimino questa pagina?", testo:"Non si può recuperare."})) return;
+    S.diario = S.diario.filter(x=>x.id!==b.dataset.eliminadiario);
+    await removeItem("diario", b.dataset.eliminadiario);
+    renderDiario();
+  }));
+}
+
+/* =========================================================================
+   DESIDERI
+   ========================================================================= */
+function renderDesideri(){
+  const veri = S.desideri.filter(d=>!d.proposta);
+  const fond = veri.filter(d=>d.fondamentale);
+  $("#v-desideri").innerHTML = `
+  <div class="wrap stagger">
+    <section class="panel liquid-glass deep">
+      <h1>I desideri</h1>
+      <p class="lede">Prima una lista libera, anche abbondante. Poi la potatura. Non devono essere undici: il numero emerge dalla tua vita, non te lo impone nessuno.</p>
+      <p class="notice" style="margin-top:18px;max-width:62ch">Attenzione a non confondere obiettivi, doveri, aspettative, status e desideri. Un desiderio è ciò che vuoi davvero, non ciò che pensi di dover volere.</p>
+      <label class="field" style="margin:22px 0 10px"><span>Aggiungi un desiderio</span>
+        <input class="inp" id="des-nuovo" placeholder="Anche una riga, anche impreciso."></label>
+      <div class="row">
+        <button class="btn-white" id="des-add">Aggiungi</button>
+        ${AI() && S.stato.ritratto ? `<button class="btn-glass" id="des-proponi">Proponimi dei candidati dal mio ritratto</button>` : ""}
+        ${AI() && !S.stato.ritratto ? `<span class="mono">per i candidati serve prima il ritratto (in Oggi)</span>` : ""}
+      </div>
+      <div id="des-out" style="margin-top:14px"></div>
+    </section>
+    ${veri.length ? `<section class="panel liquid-glass deep">
+      <div class="spread"><p class="eyebrow" style="margin:0">${veri.length} desideri · ${fond.length} fondamentali</p><span class="mono">la stella segna i fondamentali</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">${veri.map(desHTML).join("")}</div>
+    </section>` : `<section class="panel liquid-glass deep"><p class="empty">La lista è vuota. Comincia buttandoci dentro tutto, senza filtrare.</p></section>`}
+    ${S.desideri.some(d=>d.proposta) ? `<section class="panel liquid-glass deep">
+      <p class="eyebrow">Proposte da confermare o buttare via</p>
+      <p class="lede" style="font-size:14.5px;margin:0 0 14px">Queste non sono ancora tue: sono ipotesi lette nel tuo ritratto. Tieni solo quelle che riconosci.</p>
+      <div style="display:flex;flex-direction:column;gap:12px">${S.desideri.filter(d=>d.proposta).map(desHTML).join("")}</div>
+    </section>` : ""}
+  </div>`;
+  legaDesideri();
+}
+function desHTML(d){
+  return `<div class="des ${d.proposta?"proposta":""}" data-id="${d.id}">
+    <div class="des-hd" data-apri="${d.id}">
+      ${d.proposta ? "" : `<button class="star" data-star="${d.id}" aria-pressed="${!!d.fondamentale}" title="segna come fondamentale">${ico("star")}</button>`}
+      <span class="t">${esc(d.titolo||"(senza titolo)")}</span>
+      ${d.dimensione?`<span class="dim">${esc(d.dimensione)}</span>`:""}
+      ${d.proposta?`<span class="badge-sm">proposta</span>`:""}
+    </div>
+    ${d._aperto ? `<div class="des-body">
+      ${d.proposta ? `<div class="row" style="margin:14px 0 4px">
+          <button class="btn-white" data-accetta="${d.id}">È mio, tienilo</button>
+          <button class="btn-glass" data-elimina="${d.id}">Non è mio</button>
+        </div>` : `
+      <label class="field" style="margin-top:14px"><span>Titolo</span><input class="inp" data-campo="titolo" data-id="${d.id}" value="${esc(d.titolo||"")}"></label>
+      <label class="field"><span>Dimensione</span>
+        <select class="inp" data-campo="dimensione" data-id="${d.id}"><option value="">—</option>
+          ${DIMENSIONI.map(x=>`<option value="${x}" ${d.dimensione===x?"selected":""}>${x}</option>`).join("")}</select></label>
+      <label class="field"><span>Perché lo desidero?</span><textarea class="inp" data-campo="perche" data-id="${d.id}" rows="3">${esc(d.perche||"")}</textarea></label>
+      <label class="field"><span>Che cosa rappresenta?</span><textarea class="inp" data-campo="rappresenta" data-id="${d.id}" rows="3">${esc(d.rappresenta||"")}</textarea></label>
+      <label class="field"><span>Che persona esprime questo desiderio?</span><textarea class="inp" data-campo="chiEsprime" data-id="${d.id}" rows="3">${esc(d.chiEsprime||"")}</textarea></label>
+      <label class="field"><span>Qual è il primo centimetro che posso vivere oggi?</span><textarea class="inp" data-campo="centimetro" data-id="${d.id}" rows="2">${esc(d.centimetro||"")}</textarea></label>
+      <div class="row">
+        ${AI() ? `<button class="btn-glass" data-scava="${d.id}">Fammi le domande scomode</button>` : ""}
+        <button class="btn-link" data-elimina="${d.id}">elimina</button>
+      </div>
+      <div class="prose" data-out="${d.id}" style="margin-top:14px"></div>`}
+    </div>` : ""}
+  </div>`;
+}
+function legaDesideri(){
+  const add = async () => {
+    const i = $("#des-nuovo"); const t = i.value.trim(); if(!t) return;
+    const d = {id:uid(), titolo:t, dimensione:"", perche:"", rappresenta:"", chiEsprime:"", centimetro:"", fondamentale:false, proposta:false};
+    S.desideri.push(d); i.value = "";
+    await persistItem("desideri", d); renderDesideri();
+  };
+  $("#des-add").addEventListener("click", add);
+  $("#des-nuovo").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); add(); } });
+  document.querySelectorAll("[data-apri]").forEach(el => el.addEventListener("click", e => {
+    if(e.target.closest("button")) return;
+    const d = S.desideri.find(x=>x.id===el.dataset.apri); if(!d) return;
+    d._aperto = !d._aperto; renderDesideri();
+  }));
+  document.querySelectorAll("[data-star]").forEach(b => b.addEventListener("click", async e => {
+    e.stopPropagation();
+    const d = S.desideri.find(x=>x.id===b.dataset.star); if(!d) return;
+    d.fondamentale = !d.fondamentale; await persistItem("desideri", scrub(d)); renderDesideri();
+  }));
+  document.querySelectorAll("[data-campo]").forEach(el => {
+    const salva = debounce(async () => {
+      const d = S.desideri.find(x=>x.id===el.dataset.id); if(!d) return;
+      d[el.dataset.campo] = el.value; await persistItem("desideri", scrub(d));
+    }, 700);
+    el.addEventListener("input", salva); el.addEventListener("change", salva);
+  });
+  document.querySelectorAll("[data-elimina]").forEach(b => b.addEventListener("click", async e => {
+    e.stopPropagation();
+    const d = S.desideri.find(x=>x.id===b.dataset.elimina); if(!d) return;
+    if(!d.proposta && !await conferma({titolo:"Elimino questo desiderio?", testo:d.titolo||""})) return;
+    S.desideri = S.desideri.filter(x=>x.id!==d.id); await removeItem("desideri", d.id); renderDesideri();
+  }));
+  document.querySelectorAll("[data-accetta]").forEach(b => b.addEventListener("click", async e => {
+    e.stopPropagation();
+    const d = S.desideri.find(x=>x.id===b.dataset.accetta); if(!d) return;
+    d.proposta = false; await persistItem("desideri", scrub(d)); renderDesideri();
+  }));
+  document.querySelectorAll("[data-scava]").forEach(b => b.addEventListener("click", async e => {
+    e.stopPropagation();
+    const d = S.desideri.find(x=>x.id===b.dataset.scava); if(!d) return;
+    const out = document.querySelector(`[data-out="${d.id}"]`);
+    b.disabled = true; out.innerHTML = PENSA;
+    try{
+      const r = await chiedi([{role:"user",content:REGOLE},{role:"user",content:
+        contesto() + "\n\nSTA LAVORANDO A QUESTO DESIDERIO: «" + d.titolo + "»" +
+        (d.perche?"\nPerché lo desidera: "+d.perche:"") + (d.rappresenta?"\nCosa rappresenta: "+d.rappresenta:"") + (d.chiEsprime?"\nChi lo esprime: "+d.chiEsprime:"") +
+        "\n\nAiutalo a capire se è un desiderio autentico o un obiettivo, un dovere, un'aspettativa o uno status travestito. Se senti odore di bisogno di approvazione, dillo. Non decidere tu: metti alla prova. Massimo otto righe, e finisci con UNA sola domanda scomoda."}],
+        {cache:false, onText:({text})=>{ out.innerHTML = fmt(text); }});
+      const dom = ultimaDomanda(r.text);
+      out.innerHTML = fmt(r.text) + (dom ? `<div class="row" style="margin-top:12px"><button class="btn-link" data-conserva="${esc(dom)}">conserva questa domanda</button></div>` : "");
+      legaStrumentiMessaggi();
+    }catch(err){ out.innerHTML = `<p class="muted">${esc(messaggioErrore(err))}</p>`; }
+    b.disabled = false;
+  }));
+  const prop = $("#des-proponi");
+  if(prop) prop.addEventListener("click", async () => {
+    const out = $("#des-out"); prop.disabled = true; out.innerHTML = PENSA;
+    try{
+      const arr = await SAMPLE.json(
+        REGOLE + "\n\n" + contesto() +
+        "\n\nCOMPITO: leggendo SOLO ciò che è emerso da lui, proponi da 8 a 14 CANDIDATI desiderio — una lista libera e abbondante, da potare dopo. Devono coprire dimensioni diverse dell'esistenza (corpo, relazioni, famiglia, amore, denaro, lavoro, libertà, conoscenza, spiritualità, esperienze, creatività, servizio, casa, natura, avventura, contributo). Non inventare una vita che non hai visto: se un'area non è emersa, non riempirla. Sono ipotesi, non verdetti.\n\nRispondi SOLO con un array JSON di oggetti {\"titolo\": string, \"dimensione\": string}. Esempio: [{\"titolo\":\"Tornare a dormire senza sveglia una volta a settimana\",\"dimensione\":\"corpo\"}]",
+        {cache:false, modelTier:"complex"});
+      if(!Array.isArray(arr)) throw {code:"invalid_json"};
+      for(const x of arr.slice(0,16)){
+        const d = {id:uid(), titolo:String(x.titolo||"").slice(0,200), dimensione:DIMENSIONI.includes(String(x.dimensione)) ? String(x.dimensione) : "",
+                   perche:"", rappresenta:"", chiEsprime:"", centimetro:"", fondamentale:false, proposta:true};
+        if(d.titolo){ S.desideri.push(d); await persistItem("desideri", d); }
+      }
+      renderDesideri(); toast("Sono proposte. Tieni solo quelle che riconosci.");
+    }catch(e){ out.innerHTML = `<p class="muted">${esc(messaggioErrore(e))}</p>`; prop.disabled = false; }
+  });
+}
+
+/* =========================================================================
+   MANTRA
+   ========================================================================= */
+function renderMantra(){
+  const v = S.stato.mantraVarianti;
+  $("#v-mantra").innerHTML = `
+  <div class="wrap stagger">
+    <section class="panel liquid-glass deep">
+      <h1>Il mantra identitario</h1>
+      <p class="lede">Non una frase motivazionale: una dichiarazione di chi scegli di essere mentre vivi questa vita. Il mantra deve essere tuo — non sei tu a doverti adattare alla frase.</p>
+    </section>
+    ${S.stato.mantra ? `<section class="panel liquid-glass deep">
+      <p class="eyebrow">Il tuo mantra</p>
+      <p class="h-title mantra ${S.stato.mantra.length>70?"long":""}" style="font-size:clamp(26px,3.6vw,42px);text-align:left">${parole(S.stato.mantra)}</p>
+      <div class="row" style="margin-top:22px"><button class="btn-glass" id="man-modifica">Modifica</button><button class="btn-link" id="man-cancella">rimuovilo</button></div>
+    </section>` : ""}
+    <section class="panel liquid-glass deep">
+      <p class="eyebrow">Gli otto elementi</p>
+      <p class="lede" style="font-size:14.5px;margin:0 0 20px">Rispondi con le tue parole, anche in modo grezzo. Da qui nasce la frase.</p>
+      ${MANTRA_Q.map(([k,q])=>`<label class="field"><span>${esc(q)}</span><textarea class="inp" data-mantraq="${k}" rows="2">${esc((S.stato.mantraQ||{})[k]||"")}</textarea></label>`).join("")}
+      <div class="row">
+        ${AI() ? `<button class="btn-white" id="man-genera">Proponimi tre versioni</button>` : ""}
+        <button class="btn-glass" id="man-scrivo">Lo scrivo io</button>
+      </div>
+      <div id="man-out" style="margin-top:20px"></div>
+    </section>
+    ${v ? `<section class="panel liquid-glass deep">
+      <p class="eyebrow">Tre versioni · scegline una, modificala, oppure costruiamone una quarta</p>
+      <div class="grid2" style="margin-top:6px">
+        ${["essenziale","poetica","identitaria"].map(k => v[k] ? `
+          <div class="des" style="padding:20px 22px">
+            <p class="mono" style="margin:0 0 12px">${k}</p>
+            <p style="font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.3;margin:0">${esc(v[k])}</p>
+            <div class="row" style="margin-top:18px"><button class="btn-white" data-sceglimantra="${esc(v[k])}">Scegli</button><button class="btn-link" data-modificamantra="${esc(v[k])}">modifica</button></div>
+          </div>` : "").join("")}
+      </div>
+    </section>` : ""}
+  </div>`;
+  document.querySelectorAll("[data-mantraq]").forEach(el => el.addEventListener("input", () => {
+    S.stato.mantraQ = S.stato.mantraQ || {}; S.stato.mantraQ[el.dataset.mantraq] = el.value; persistStatoLento();
+  }));
+  const scriviMantra = async (valore) => {
+    const t = await chiediTesto({titolo:"Il tuo mantra", testo:"Al presente. Con le tue parole.", valore, ok:"È mio", multiline:true});
+    if(t===null) return;
+    S.stato.mantra = t.trim(); await persistStato(); render();
+  };
+  const scrivo = $("#man-scrivo"); if(scrivo) scrivo.addEventListener("click", () => scriviMantra(S.stato.mantra||""));
+  const mod = $("#man-modifica"); if(mod) mod.addEventListener("click", () => scriviMantra(S.stato.mantra||""));
+  const canc = $("#man-cancella");
+  if(canc) canc.addEventListener("click", async () => {
+    if(!await conferma({titolo:"Rimuovo il mantra?"})) return;
+    S.stato.mantra = ""; await persistStato(); render();
+  });
+  document.querySelectorAll("[data-sceglimantra]").forEach(b => b.addEventListener("click", async () => {
+    S.stato.mantra = b.dataset.sceglimantra; await persistStato(); toast("È tuo."); render();
+  }));
+  document.querySelectorAll("[data-modificamantra]").forEach(b => b.addEventListener("click", () => scriviMantra(b.dataset.modificamantra)));
+  const gen = $("#man-genera");
+  if(gen) gen.addEventListener("click", async () => {
+    const q = S.stato.mantraQ || {};
+    const risposte = MANTRA_Q.filter(([k])=>String(q[k]||"").trim()).map(([k,lab])=>lab+"\n"+q[k]).join("\n\n");
+    if(!risposte && !S.stato.ritratto){ toast("Rispondi almeno a un paio di domande."); return; }
+    const out = $("#man-out"); gen.disabled = true; out.innerHTML = PENSA;
+    try{
+      const r = await SAMPLE.json(
+        REGOLE + "\n\n" + contesto() +
+        "\n\nCOMPITO: costruire il MANTRA IDENTITARIO. Ecco le sue risposte agli otto elementi:\n\n" + (risposte||"(nessuna risposta: usa solo il ritratto)") +
+        "\n\nProponi TRE versioni della stessa dichiarazione identitaria, tutte al presente (io sono, io scelgo, io creo, io custodisco, io dono). Usa le SUE parole dove ci sono. Niente frasi motivazionali da poster, niente parole che non gli appartengono, niente superlativi. Una versione «essenziale» (una riga, secca), una «poetica» (due o tre righe, immagine concreta), una «identitaria» (potente, dichiarativa, tre o quattro righe).\n\nRispondi SOLO con un oggetto JSON {\"essenziale\": string, \"poetica\": string, \"identitaria\": string}.",
+        {cache:false, modelTier:"complex"});
+      S.stato.mantraVarianti = {essenziale:String(r.essenziale||""), poetica:String(r.poetica||""), identitaria:String(r.identitaria||"")};
+      await persistStato(); renderMantra();
+    }catch(e){ out.innerHTML = `<p class="muted">${esc(messaggioErrore(e))}</p>`; gen.disabled = false; }
+  });
+}
+
+/* =========================================================================
+   SPECCHIO
+   ========================================================================= */
+function renderSpecchio(){
+  $("#v-specchio").innerHTML = `
+  <div class="wrap stagger">
+    <section class="panel liquid-glass deep">
+      <h1>Le domande a specchio</h1>
+      <p class="lede">Non domande qualunque: quelle che continuano a lavorare anche quando la conversazione è finita. Te le ripropongo dopo una settimana, e poi ancora.</p>
+      <label class="field" style="margin:22px 0 10px"><span>Conserva una domanda</span>
+        <input class="inp" id="sp-nuova" placeholder="Che cosa continueresti a fare anche se nessuno lo sapesse mai?"></label>
+      <button class="btn-white" id="sp-add">${ico("bookmark")} Conserva</button>
+    </section>
+    ${S.specchio.length ? S.specchio.map(q=>`
+      <section class="panel liquid-glass deep specchio">
+        <p class="eyebrow" style="margin-bottom:2px">conservata il ${esc(dataIt(q.creata))}${q.ultimaRiproposta?` · riletta il ${esc(dataIt(q.ultimaRiproposta))}`:""}</p>
+        <p class="q">${esc(q.domanda)}</p>
+        <div class="row" style="margin-top:16px">
+          <button class="btn-glass" data-portadialogo2="${esc(q.domanda)}">Rispondile nel dialogo</button>
+          <button class="btn-link" data-eliminasp="${q.id}">non mi serve più</button>
+        </div>
+      </section>`).join("") : `<section class="panel liquid-glass deep"><p class="empty">Nessuna domanda conservata. Ne troverai nel dialogo e nelle letture del diario: quando una ti resta addosso, tienila.</p></section>`}
+  </div>`;
+  const add = async () => {
+    const i = $("#sp-nuova"); const t = i.value.trim(); if(!t) return;
+    const q = {id:uid(), domanda:t, creata:OGGI_ISO(), ultimaRiproposta:"", conservata:true};
+    S.specchio.unshift(q); i.value = ""; await persistItem("specchio", q); render();
+  };
+  $("#sp-add").addEventListener("click", add);
+  $("#sp-nuova").addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); add(); } });
+  document.querySelectorAll("[data-eliminasp]").forEach(b => b.addEventListener("click", async () => {
+    S.specchio = S.specchio.filter(x=>x.id!==b.dataset.eliminasp); await removeItem("specchio", b.dataset.eliminasp); render();
+  }));
+  document.querySelectorAll("[data-portadialogo2]").forEach(b => b.addEventListener("click", () => portaNelDialogo(b.dataset.portadialogo2)));
+}
+
+/* =========================================================================
+   PATTO
+   ========================================================================= */
+function renderPatto(){
+  $("#v-patto").innerHTML = `
+  <div class="wrap stagger">
+    <section class="panel liquid-glass deep">
+      <h1>Il patto</h1>
+      <p class="lede">Le regole di questo viaggio. Valgono per il compagno di viaggio — ogni volta che gli parli, le rilegge — e valgono anche per te, quando ti dimentichi perché sei partito.</p>
+    </section>
+    <section class="panel liquid-glass deep">
+      ${PATTO.map(([t,c],i)=>`<div class="patto-item"><div class="n">${String(i+1).padStart(2,"0")}</div><div><h3>${esc(t)}</h3><div class="prose">${fmt(c)}</div></div></div>`).join("")}
+    </section>
+    <section class="panel liquid-glass deep">
+      <h3>Come è fatto questo strumento</h3>
+      <div class="prose" style="color:var(--w70);margin-top:12px">
+        <p>Il <strong>ritratto</strong> è la memoria: il dialogo si accorcia, il ritratto resta e viene riletto ogni volta. Aggiornalo quando senti che sei cambiato.</p>
+        <p>I <strong>centimetri</strong> non hanno serie da non interrompere, né giorni segnati in rosso. Un giorno vuoto è un giorno vissuto lo stesso.</p>
+        <p>Le <strong>domande a specchio</strong> tornano da sole dopo una settimana. Puoi anche non rispondere: a volte una domanda lavora meglio se resta aperta.</p>
+        <p>La <strong>musica</strong> non è un file: viene generata dal vivo nel browser, una per ogni paesaggio, e non suona mai uguale. Il tasto in basso a destra la accende e la spegne; se la lasci accesa, alla prossima visita riparte al primo tocco.</p>
+        <p>La <strong>voce</strong> viene trascritta dal riconoscimento vocale del tuo browser, in tempo reale, mentre parli. Se il microfono non è consentito in questa finestra, scrivi: tutto funziona lo stesso.</p>
+        ${fuoriDallArtifact() ? `<p><strong>Impostazioni.</strong> ${HTTP.proxy ? "Questa copia parla con Claude attraverso il suo server: non serve nessuna chiave." : (chiaveLocale() ? "Stai usando una tua chiave API di Anthropic, salvata in questo browser." : "Per il dialogo serve una chiave API di Anthropic, oppure una copia pubblicata con il server.")} <button class="btn-link" id="patto-chiave">${chiaveLocale() ? "cambia o rimuovi la chiave" : "inserisci una chiave"}</button></p>` : ""}
+        <p>Tutto quello che scrivi resta <strong>nel tuo browser</strong>: nessun server, nessuno lo legge, nemmeno chi ha costruito questa pagina. Con <em>Esporta</em> fai un backup e lo riprendi su un altro dispositivo.</p>
+      </div>
+    </section>
+  </div>`;
+  const pk = $("#patto-chiave"); if(pk) pk.addEventListener("click", impostaChiave);
+}
+
+/* =========================================================================
+   WIZARD
+   ========================================================================= */
+let wizPasso = 0;
+function apriWizard(da){ wizPasso = da || 0; disegnaWizard(); }
+function disegnaWizard(){
+  const p = WIZARD[wizPasso], ultimo = wizPasso === WIZARD.length - 1;
+  let el = document.getElementById("wiz");
+  if(!el){ el = document.createElement("div"); el.id = "wiz"; el.className = "wiz"; document.body.appendChild(el); }
+  el.innerHTML = `<div class="wiz-box liquid-glass deep">
+    <div class="wiz-steps">
+      ${WIZARD.map((w,i)=>`<button class="${i<wizPasso?"done":""}" data-passo="${i}" aria-current="${i===wizPasso}" title="${esc(w.kicker)}" aria-label="Passo ${i+1}: ${esc(w.kicker)}"><i></i></button>`).join("")}
+    </div>
+    <div class="wiz-body">
+      <p class="wiz-kicker">${esc(p.kicker)}</p>
+      <h2>${esc(p.titolo)}</h2>
+      <div class="prose">${fmt(p.corpo)}</div>
+      ${p.citazione ? `<p class="wiz-quote">${esc(p.citazione)}</p>` : ""}
+    </div>
+    <div class="wiz-foot">
+      ${ultimo ? `<button class="btn-white lg" id="wiz-fine">Comincia dal dialogo ${ico("arrow")}</button>` : `<button class="btn-white lg" id="wiz-avanti">Avanti ${ico("arrow")}</button>`}
+      ${wizPasso > 0 ? `<button class="btn-glass" id="wiz-indietro">Indietro</button>` : ""}
+      ${ultimo ? `<button class="btn-link" id="wiz-chiudi">chiudi e guardo in giro</button>` : `<button class="btn-link" id="wiz-salta">salta, leggo dopo</button>`}
+      <span class="mono" style="margin-left:auto">${wizPasso+1} / ${WIZARD.length}</span>
+    </div>
+  </div>`;
+  el.querySelectorAll("[data-passo]").forEach(b => b.addEventListener("click", () => { wizPasso = +b.dataset.passo; disegnaWizard(); }));
+  const av = el.querySelector("#wiz-avanti");   if(av)  av.addEventListener("click", () => { wizPasso++; disegnaWizard(); });
+  const ind = el.querySelector("#wiz-indietro"); if(ind) ind.addEventListener("click", () => { wizPasso--; disegnaWizard(); });
+  const sal = el.querySelector("#wiz-salta");   if(sal) sal.addEventListener("click", () => chiudiWizard(false));
+  const chi = el.querySelector("#wiz-chiudi");  if(chi) chi.addEventListener("click", () => chiudiWizard(false));
+  const fin = el.querySelector("#wiz-fine");    if(fin) fin.addEventListener("click", () => chiudiWizard(true));
+  const primo = el.querySelector(".wiz-foot .btn-white"); if(primo) primo.focus();
+}
+function viaggioVuoto(){
+  return !S.stato.ritratto && !S.dialogo.some(t=>t.role==="user") && !S.diario.length && !S.centimetri.length;
+}
+async function chiudiWizard(alDialogo){
+  const el = document.getElementById("wiz"); if(el) el.remove();
+  try{ sessionStorage.setItem("wizChiuso","1"); }catch(e){}
+  if(!S.stato.wizardVisto){ S.stato.wizardVisto = true; await persistStato(); render(); }
+  if(alDialogo) vai("dialogo");
+}
+document.addEventListener("keydown", e => {
+  if(!document.getElementById("wiz")) return;
+  if(e.key === "Escape"){ e.preventDefault(); chiudiWizard(false); }
+  else if(e.key === "ArrowRight" && wizPasso < WIZARD.length - 1){ wizPasso++; disegnaWizard(); }
+  else if(e.key === "ArrowLeft" && wizPasso > 0){ wizPasso--; disegnaWizard(); }
+});
+
+/* =========================================================================
+   ESPORTA
+   ========================================================================= */
+function markdownCompleto(){
+  const L = [];
+  L.push("# Il mio viaggio");
+  L.push("_Esportato il " + new Date().toLocaleDateString("it-IT",{day:"numeric",month:"long",year:"numeric"}) + "_");
+  if(S.stato.mantra) L.push("\n## Mantra\n\n> " + S.stato.mantra.replace(/\n/g,"\n> "));
+  if(S.stato.ritratto) L.push("\n## Ritratto\n_aggiornato il "+(S.stato.ritrattoData||"—")+"_\n\n" + S.stato.ritratto);
+  const mq = S.stato.mantraQ||{};
+  if(MANTRA_Q.some(([k])=>mq[k])){ L.push("\n## Gli otto elementi"); MANTRA_Q.forEach(([k,q])=>{ if(mq[k]) L.push("\n**"+q+"**\n\n"+mq[k]); }); }
+  const veri = S.desideri.filter(d=>!d.proposta);
+  if(veri.length){
+    L.push("\n## Desideri");
+    veri.forEach(d=>{
+      L.push("\n### " + (d.fondamentale?"★ ":"") + (d.titolo||"—") + (d.dimensione?"  \n_"+d.dimensione+"_":""));
+      if(d.perche) L.push("\n**Perché lo desidero.** " + d.perche);
+      if(d.rappresenta) L.push("\n**Che cosa rappresenta.** " + d.rappresenta);
+      if(d.chiEsprime) L.push("\n**Che persona lo esprime.** " + d.chiEsprime);
+      if(d.centimetro) L.push("\n**Il primo centimetro.** " + d.centimetro);
+    });
+  }
+  if(S.specchio.length){ L.push("\n## Domande a specchio"); S.specchio.forEach(q=>L.push("\n- " + q.domanda + "  \n  _conservata il " + q.creata + "_")); }
+  if(S.centimetri.length){ L.push("\n## Centimetri"); S.centimetri.slice().sort((a,b)=>b.data.localeCompare(a.data)).forEach(c=>L.push("\n- **" + c.data + "** · " + (c.tipo||"") + " — " + c.testo)); }
+  if(S.diario.length){ L.push("\n## Diario"); S.diario.forEach(d=>{ L.push("\n### " + d.data + "\n\n" + d.testo); if(d.lettura) L.push("\n> " + d.lettura.replace(/\n/g,"\n> ")); }); }
+  if(S.dialogo.length){ L.push("\n## Dialogo"); S.dialogo.forEach(t=>L.push("\n**" + (t.role==="user"?"Io":"Lui") + ".** " + t.content)); }
+  return L.join("\n");
+}
+async function salvaFile(nome, dati, titolo){
+  if(DOWNLOADS){
+    try{ await DOWNLOADS.save({filename:nome, data:dati}); toast("Salvato."); return; }
+    catch(e){ if(e && e.code === "declined") return; }
+  }
+  if(!window.claude){                                     // sito normale: download diretto
+    const blob = new Blob([dati], {type: nome.endsWith(".json") ? "application/json" : "text/markdown"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    toast("Salvato."); return;
+  }
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="modal-box liquid-glass deep" style="max-width:760px">
+    <div class="spread"><h3>${esc(titolo)}</h3><button class="btn-glass" data-x>Chiudi</button></div>
+    <p class="lede" style="font-size:13.5px;margin-top:6px">Il salvataggio diretto non è disponibile qui: copia il testo e incollalo in un file chiamato <strong>${esc(nome)}</strong>.</p>
+    <textarea class="inp" style="margin-top:14px;height:55vh;font-family:var(--mono);font-size:12.5px"></textarea></div>`;
+  document.body.appendChild(m);
+  const ta = m.querySelector("textarea"); ta.value = dati; ta.select();
+  m.querySelector("[data-x]").onclick = () => m.remove();
+  m.addEventListener("click", e => { if(e.target===m) m.remove(); });
+}
+function backupJSON(){
+  return JSON.stringify({ app:"il-mio-viaggio", versione:1, esportato:new Date().toISOString(),
+    stato:S.stato, dialogo:S.dialogo, desideri:S.desideri.map(scrub), diario:S.diario, centimetri:S.centimetri, specchio:S.specchio }, null, 1);
+}
+async function importaBackup(file, msg){
+  let dati;
+  try{ dati = JSON.parse(await file.text()); }catch(e){ msg.textContent = "Questo file non è un backup leggibile."; return; }
+  if(!dati || dati.app !== "il-mio-viaggio" || !dati.stato){ msg.textContent = "Questo file non è un backup de Il mio Viaggio."; return; }
+  const n = (dati.diario||[]).length + (dati.centimetri||[]).length + (dati.dialogo||[]).length;
+  if(!await conferma({titolo:"Sostituisco tutto con il backup?", testo:`Il backup contiene ${n} voci tra diario, centimetri e dialogo. Quello che c'è adesso in questo browser viene rimpiazzato.`, ok:"Sostituisci"})) return;
+  Object.assign(S.stato, dati.stato||{});
+  S.dialogo = dati.dialogo||[]; S.desideri = (dati.desideri||[]).map(scrub);
+  S.diario = dati.diario||[]; S.centimetri = dati.centimetri||[]; S.specchio = dati.specchio||[];
+  saveLocal(); toast("Backup importato."); render();
+}
+async function esporta(){
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="modal-box liquid-glass deep">
+    <h3>Porta via il tuo viaggio</h3>
+    <p class="lede" style="font-size:14.5px;margin-top:6px">Tutto quello che scrivi vive in questo browser. Il backup ti permette di riprenderlo su un altro dispositivo, o di tenerlo al sicuro.</p>
+    <div class="row" style="margin-top:18px">
+      <button class="btn-white" data-md>${ico("download")} Testo leggibile (.md)</button>
+      <button class="btn-glass" data-json>Backup (.json)</button>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--w14);margin:20px 0">
+    <div class="row">
+      <label class="btn-glass" style="cursor:pointer">Importa un backup <input type="file" accept=".json,application/json" hidden data-imp></label>
+      <span class="mono" data-msg></span>
+    </div>
+    <div class="row" style="margin-top:18px;justify-content:flex-end"><button class="btn-glass" data-x>Chiudi</button></div>
+  </div>`;
+  document.body.appendChild(m);
+  const chiudi = () => m.remove();
+  m.querySelector("[data-x]").onclick = chiudi;
+  m.addEventListener("click", e => { if(e.target===m) chiudi(); });
+  m.querySelector("[data-md]").onclick = () => { chiudi(); salvaFile("il-mio-viaggio-" + OGGI_ISO() + ".md", markdownCompleto(), "Il tuo viaggio, in testo"); };
+  m.querySelector("[data-json]").onclick = () => { chiudi(); salvaFile("il-mio-viaggio-backup-" + OGGI_ISO() + ".json", backupJSON(), "Il tuo backup"); };
+  m.querySelector("[data-imp]").addEventListener("change", async e => {
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    chiudi(); await importaBackup(f, m.querySelector("[data-msg]"));
+  });
+}
+
+/* =========================================================================
+   AVVIO
+   ========================================================================= */
+(async function avvio(){
+  initBG();
+  initMusica();
+  render();
+  await caricaTutto();
+  // La guida compare finché il viaggio non è cominciato davvero — non dipende da un flag salvato.
+  // Chi la chiude non la rivede nella stessa sessione; chi non ha ancora scritto niente la ritrova alla prossima visita.
+  if(viaggioVuoto() && !sessionStorage.getItem("wizChiuso")) apriWizard(0);
+  usa("sample").then(async s => {
+    if(s) SAMPLE = s;
+    else { SAMPLE = sampleHTTP; await sondaProxy(); }
+    sampleDeciso = true; render();
+  });
+  usa("downloads").then(d => { DOWNLOADS = d; });
+})();
+</script>
