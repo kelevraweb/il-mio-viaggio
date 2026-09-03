@@ -1780,8 +1780,7 @@ let wizPasso = 0;
 /* ---- la voce che legge il wizard: una clip per passo, ElevenLabs, incorporata negli asset ---- */
 const VOCI = ["{{VOCE_1}}","{{VOCE_2}}","{{VOCE_3}}","{{VOCE_4}}","{{VOCE_5}}","{{VOCE_6}}"];
 const KEY_VOCE = "ilmioviaggio.voce";
-const VOCE = { on:true, audio:null, bloccata:false };
-try{ VOCE.on = localStorage.getItem(KEY_VOCE) !== "0"; }catch(e){}
+const VOCE = { on:true, audio:null, bloccata:false };   // accesa a ogni apertura della finestra; lo spegnimento vale solo per quella volta
 function duckMusica(giu){ try{ if(AU.ctx && (AU.on || AU.treno.on)){ AU.master.gain.cancelScheduledValues(AU.ctx.currentTime); AU.master.gain.setTargetAtTime(giu ? LIVELLO.sotto : LIVELLO.pieno, AU.ctx.currentTime, .45); } }catch(e){} }
 function fermaVoce(){ if(VOCE.audio){ try{ VOCE.audio.pause(); }catch(e){} VOCE.audio = null; } duckMusica(false); }
 function leggiPasso(i){
@@ -1802,13 +1801,12 @@ document.addEventListener("pointerdown", e => {
 });
 function toggleVoce(){
   VOCE.on = !VOCE.on;
-  try{ localStorage.setItem(KEY_VOCE, VOCE.on ? "1" : "0"); }catch(e){}
   const b = document.getElementById("wiz-voce");
   if(b){ b.setAttribute("aria-pressed", String(VOCE.on)); b.innerHTML = iconaVoce(); }
   if(VOCE.on) leggiPasso(wizPasso); else fermaVoce();
 }
 const iconaVoce = () => (VOCE.on ? ico("volume") : ico("volumex")) + `<span class="lbl">${VOCE.on ? "voce accesa" : "voce spenta"}</span>`;
-function apriWizard(da){ wizPasso = da || 0; disegnaWizard(); }
+function apriWizard(da){ wizPasso = da || 0; VOCE.on = true; VOCE.bloccata = false; disegnaWizard(); }
 function disegnaWizard(){
   const p = WIZARD[wizPasso], ultimo = wizPasso === WIZARD.length - 1;
   let el = document.getElementById("wiz");
