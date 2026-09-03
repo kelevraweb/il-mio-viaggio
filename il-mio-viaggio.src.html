@@ -302,6 +302,13 @@ label.field > span{display:block;font-family:var(--sans);font-size:11px;letter-s
 .wiz .prose strong{color:#fff;font-weight:500}
 .wiz-quote{font-family:var(--serif);font-style:italic;font-size:23px;line-height:1.4;color:#fff;border-left:1.5px solid #fff;padding-left:18px;margin:26px 0 0;max-width:42ch}
 .wiz-foot{display:flex;align-items:center;gap:14px;margin-top:36px;flex-wrap:wrap}
+.figure{display:flex;gap:12px;margin-top:8px}
+.figura{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 8px 12px;border-radius:16px;border:1px solid var(--w14);background:var(--w08);color:#fff;cursor:pointer;transition:background .2s,color .2s,transform .2s}
+.figura svg{width:46px;height:46px}
+.figura span{font-family:var(--sans);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase}
+.figura:hover{transform:translateY(-1px);background:var(--w14)}
+.figura[aria-pressed="true"]{background:#fff;color:var(--ink);border-color:#fff}
+.inp[type="date"]{color-scheme:dark}
 .voce-btn{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;border-radius:50%;border:1px solid var(--w14);background:var(--w08);color:#fff;
   display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .2s,background .2s}
 .voce-btn .ico{width:18px;height:18px}
@@ -678,7 +685,7 @@ function fase(){
   return "vita";
 }
 
-const REGOLE = `Sei il compagno di viaggio di chi ti scrive: non un assistente che dice che va tutto bene, non un motivatore che riempie di frasi positive. Sei intelligente, colto, curioso, sincero e caldo. Scrivi in italiano e dai del tu. Non dare per scontato il genere di chi ti scrive finché non emerge da solo: usa formulazioni neutre.
+const REGOLE = `Sei il compagno di viaggio di chi ti scrive: non un assistente che dice che va tutto bene, non un motivatore che riempie di frasi positive. Sei intelligente, colto, curioso, sincero e caldo. Scrivi in italiano e dai del tu. Nel contesto trovi nome e genere di chi ti scrive: usali con naturalezza, senza ripetere il nome a ogni riga.
 
 IL PATTO — regole non negoziabili:
 
@@ -702,6 +709,13 @@ function contesto(){
   const p = [];
   const f = fase();
   p.push("CONTESTO (non recitarlo, usalo).");
+  const pf = S.stato.profilo || {};
+  if(pf.nome){
+    const eta = pf.nascita ? Math.floor((Date.now() - new Date(pf.nascita + "T12:00:00").getTime()) / (365.25 * 86400000)) : null;
+    p.push("CHI TI SCRIVE: si chiama " + pf.nome +
+      (pf.genere === "uomo" ? " — uomo: usa il maschile" : pf.genere === "donna" ? " — donna: usa il femminile" : " — preferisce formulazioni neutre: evita gli accordi di genere") +
+      (eta && eta > 0 && eta < 120 ? `, ${eta} anni` : "") + ".");
+  }
   p.push("Fase del viaggio: " + f + ".");
   if(f==="conoscenza") p.push("Ora conosci soltanto. Niente desideri strutturati, niente mantra, niente piani.");
   if(f==="desideri") p.push("Potete lavorare a distinguere i desideri autentici da obiettivi, doveri, aspettative e status. Non decidere tu quali siano.");
@@ -1179,7 +1193,8 @@ function renderOggi(){
   else if(primaVolta) titolo = parole("Chi rimane, quando") + "<br>" + parole("togli tutto il resto?", 4);
   else titolo = parole("Prima la persona.") + "<br>" + parole("Poi tutto il resto.", 3);
 
-  const badge = primaVolta ? "Un compagno di viaggio che non ti dà sempre ragione"
+  const nomeP = (S.stato.profilo && S.stato.profilo.nome) || "";
+  const badge = primaVolta ? (nomeP ? `Ciao ${nomeP}. ` : "") + "Un compagno di viaggio che non ti dà sempre ragione"
               : centOggi ? "Il centimetro di oggi è segnato"
               : `${S.centimetri.length} centimetr${S.centimetri.length===1?"o":"i"} vissut${S.centimetri.length===1?"o":"i"} · ${new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}`;
   const sub = primaVolta ? "Prima dei desideri, degli obiettivi e dei programmi, una domanda alla volta. Puoi scrivere o parlare. Si comincia dal dialogo."
@@ -1438,7 +1453,8 @@ async function aggiornaRitratto(){
   const b = $("#ritratto-agg"); if(b) b.disabled = true;
   toast("Sto distillando il ritratto…");
   try{
-    const trascrizione = S.dialogo.slice(-60).map(t => (t.role==="user"?"LUI: ":"TU: ") + t.content).join("\n\n");
+    const nome = (S.stato.profilo && S.stato.profilo.nome) || "LUI";
+    const trascrizione = S.dialogo.slice(-60).map(t => (t.role==="user" ? nome.toUpperCase() + ": " : "TU: ") + t.content).join("\n\n");
     const diario = S.diario.slice(0,6).map(d => d.data + ": " + d.testo).join("\n\n");
     const r = await chiedi(
       REGOLE + "\n\nCOMPITO DIVERSO DAL SOLITO: non stai parlando con la persona. Stai scrivendo per te il RITRATTO, cioè la tua memoria di chi è.\n\n" +
@@ -1828,47 +1844,92 @@ function leggiPasso(i){
 document.addEventListener("pointerdown", e => {
   if(!document.getElementById("wiz") || !VOCE.on || !VOCE.bloccata) return;
   if(e.target && e.target.closest && e.target.closest("#wiz-voce")) return;
-  VOCE.bloccata = false; leggiPasso(wizPasso);
+  if(wizProfilo && wizPasso === 0) return;
+  VOCE.bloccata = false; leggiPasso(wizPasso - wizOffset());
 });
 function toggleVoce(){
   VOCE.on = !VOCE.on;
   const b = document.getElementById("wiz-voce");
   if(b){ b.setAttribute("aria-pressed", String(VOCE.on)); b.innerHTML = iconaVoce(); }
-  if(VOCE.on) leggiPasso(wizPasso); else fermaVoce();
+  if(VOCE.on && !(wizProfilo && wizPasso === 0)) leggiPasso(wizPasso - wizOffset()); else fermaVoce();
 }
 const iconaVoce = () => (VOCE.on ? ico("volume") : ico("volumex")) + `<span class="lbl">${VOCE.on ? "voce accesa" : "voce spenta"}</span>`;
-function apriWizard(da){ wizPasso = da || 0; VOCE.on = true; VOCE.bloccata = false; disegnaWizard(); }
+let wizProfilo = false;                                  // il passo "come ti chiami" c'è solo al primo accesso
+const wizOffset = () => (wizProfilo ? 1 : 0);
+const wizTotale = () => WIZARD.length + wizOffset();
+function apriWizard(da){
+  wizProfilo = !(S.stato.profilo && S.stato.profilo.nome);
+  wizPasso = da || 0; VOCE.on = true; VOCE.bloccata = false; disegnaWizard();
+}
+const FIGURE = {
+  uomo:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="4.5" r="2.6"/><path d="M8.6 8.5h6.8a1.2 1.2 0 0 1 1.2 1.2V16h-1.9v6h-2.2v-6h-1v6H9.3v-6H7.4V9.7a1.2 1.2 0 0 1 1.2-1.2Z"/></svg>',
+  donna:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="4.5" r="2.6"/><path d="M9.2 8.5h5.6l2.6 8.6h-2.9V22h-2.1v-4.9h-.8V22H9.5v-4.9H6.6Z"/></svg>',
+  altro:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="4.5" r="2.6"/><path d="M8.9 8.5h6.2l2.1 8.6h-2.5V22h-2.1v-4.9h-1V22H9.5v-4.9H6.8Z"/><circle cx="12" cy="13" r="1.4" fill="none" stroke="currentColor" stroke-width="1.2" style="mix-blend-mode:difference"/></svg>'
+};
+function profiloHTML(){
+  const pf = S.stato.profilo || {};
+  const oggi = OGGI_ISO();
+  return `<p class="wiz-kicker">Prima di partire</p>
+    <h2>Come ti chiami?</h2>
+    <input class="inp" id="pf-nome" placeholder="Il tuo nome" value="${esc(pf.nome||"")}" autocomplete="given-name" style="margin-top:6px">
+    <p class="eyebrow" style="margin:24px 0 6px">Sei</p>
+    <div class="figure">
+      ${["uomo","donna","altro"].map(g => `<button class="figura" data-genere="${g}" aria-pressed="${pf.genere===g}">${FIGURE[g]}<span>${g}</span></button>`).join("")}
+    </div>
+    <label class="field" style="margin-top:24px"><span>Data di nascita</span><input class="inp" type="date" id="pf-nascita" max="${oggi}" value="${esc(pf.nascita||"")}"></label>
+    <p class="lede" style="font-size:13.5px;margin-top:4px">Serve al compagno di viaggio per rivolgersi a te nel modo giusto. Resta nel tuo browser.</p>`;
+}
+async function salvaProfilo(){
+  const nome = ($("#pf-nome").value || "").trim();
+  if(!nome){ toast("Dimmi almeno come ti chiami."); $("#pf-nome").focus(); return false; }
+  const sel = document.querySelector('.figura[aria-pressed="true"]');
+  S.stato.profilo = { nome, genere: sel ? sel.dataset.genere : "altro", nascita: ($("#pf-nascita").value || "") };
+  await persistStato();
+  return true;
+}
+async function avanzaWizard(){
+  if(wizProfilo && wizPasso === 0 && !(await salvaProfilo())) return;
+  if(wizPasso < wizTotale() - 1){ wizPasso++; disegnaWizard(); }
+}
 function disegnaWizard(){
-  const p = WIZARD[wizPasso], ultimo = wizPasso === WIZARD.length - 1;
+  const isProfilo = wizProfilo && wizPasso === 0;
+  const p = isProfilo ? null : WIZARD[wizPasso - wizOffset()], ultimo = wizPasso === wizTotale() - 1;
   let el = document.getElementById("wiz");
   if(!el){ el = document.createElement("div"); el.id = "wiz"; el.className = "wiz"; document.body.appendChild(el); }
   el.innerHTML = `<div class="wiz-box liquid-glass deep">
     ${VOCI[0] ? `<button class="voce-btn" id="wiz-voce" aria-pressed="${VOCE.on}" title="Voce che legge">${iconaVoce()}</button>` : ""}
     <div class="wiz-steps">
-      ${WIZARD.map((w,i)=>`<button class="${i<wizPasso?"done":""}" data-passo="${i}" aria-current="${i===wizPasso}" title="${esc(w.kicker)}" aria-label="Passo ${i+1}: ${esc(w.kicker)}"><i></i></button>`).join("")}
+      ${Array.from({length:wizTotale()}, (_,i) => { const w = (wizProfilo && i===0) ? {kicker:"Prima di partire"} : WIZARD[i - wizOffset()]; return `<button class="${i<wizPasso?"done":""}" data-passo="${i}" aria-current="${i===wizPasso}" title="${esc(w.kicker)}" aria-label="Passo ${i+1}: ${esc(w.kicker)}"><i></i></button>`; }).join("")}
     </div>
     <div class="wiz-body">
+      ${isProfilo ? profiloHTML() : `
       <p class="wiz-kicker">${esc(p.kicker)}</p>
       <h2>${esc(p.titolo)}</h2>
       <div class="prose">${fmt(p.corpo)}</div>
-      ${p.citazione ? `<p class="wiz-quote">${esc(p.citazione)}</p>` : ""}
+      ${p.citazione ? `<p class="wiz-quote">${esc(p.citazione)}</p>` : ""}`}
     </div>
     <div class="wiz-foot">
       ${ultimo ? `<button class="btn-white lg" id="wiz-fine">Comincia dal dialogo ${ico("arrow")}</button>` : `<button class="btn-white lg" id="wiz-avanti">Avanti ${ico("arrow")}</button>`}
       ${wizPasso > 0 ? `<button class="btn-glass" id="wiz-indietro">Indietro</button>` : ""}
-      ${ultimo ? `<button class="btn-link" id="wiz-chiudi">chiudi e guardo in giro</button>` : `<button class="btn-link" id="wiz-salta">salta, leggo dopo</button>`}
-      <span class="mono" style="margin-left:auto">${wizPasso+1} / ${WIZARD.length}</span>
+      ${ultimo ? `<button class="btn-link" id="wiz-chiudi">chiudi e guardo in giro</button>` : (isProfilo ? "" : `<button class="btn-link" id="wiz-salta">salta, leggo dopo</button>`)}
+      <span class="mono" style="margin-left:auto">${wizPasso+1} / ${wizTotale()}</span>
     </div>
   </div>`;
-  el.querySelectorAll("[data-passo]").forEach(b => b.addEventListener("click", () => { wizPasso = +b.dataset.passo; disegnaWizard(); }));
-  const av = el.querySelector("#wiz-avanti");   if(av)  av.addEventListener("click", () => { wizPasso++; disegnaWizard(); });
+  el.querySelectorAll("[data-passo]").forEach(b => b.addEventListener("click", async () => {
+    const dest = +b.dataset.passo;
+    if(wizProfilo && wizPasso === 0 && dest > 0 && !(await salvaProfilo())) return;    // dal profilo si esce solo col nome
+    wizPasso = dest; disegnaWizard();
+  }));
+  const av = el.querySelector("#wiz-avanti");   if(av)  av.addEventListener("click", avanzaWizard);
+  el.querySelectorAll(".figura").forEach(f => f.addEventListener("click", () => { el.querySelectorAll(".figura").forEach(x => x.setAttribute("aria-pressed", String(x===f))); }));
+  const pn = el.querySelector("#pf-nome"); if(pn){ pn.addEventListener("keydown", e => { if(e.key==="Enter"){ e.preventDefault(); avanzaWizard(); } }); setTimeout(() => pn.focus(), 50); }
   const ind = el.querySelector("#wiz-indietro"); if(ind) ind.addEventListener("click", () => { wizPasso--; disegnaWizard(); });
   const sal = el.querySelector("#wiz-salta");   if(sal) sal.addEventListener("click", () => chiudiWizard(false));
   const chi = el.querySelector("#wiz-chiudi");  if(chi) chi.addEventListener("click", () => chiudiWizard(false));
   const fin = el.querySelector("#wiz-fine");    if(fin) fin.addEventListener("click", () => chiudiWizard(true));
-  const primo = el.querySelector(".wiz-foot .btn-white"); if(primo) primo.focus();
+  const primo = el.querySelector(".wiz-foot .btn-white"); if(primo && !isProfilo) primo.focus();
   const vb = el.querySelector("#wiz-voce"); if(vb) vb.addEventListener("click", toggleVoce);
-  leggiPasso(wizPasso);
+  if(isProfilo) fermaVoce(); else leggiPasso(wizPasso - wizOffset());
 }
 function viaggioVuoto(){
   return !S.stato.ritratto && !S.dialogo.some(t=>t.role==="user") && !S.diario.length && !S.centimetri.length;
@@ -1883,7 +1944,7 @@ async function chiudiWizard(alDialogo){
 document.addEventListener("keydown", e => {
   if(!document.getElementById("wiz")) return;
   if(e.key === "Escape"){ e.preventDefault(); chiudiWizard(false); }
-  else if(e.key === "ArrowRight" && wizPasso < WIZARD.length - 1){ wizPasso++; disegnaWizard(); }
+  else if(e.key === "ArrowRight" && wizPasso < wizTotale() - 1){ if(!(wizProfilo && wizPasso === 0)) avanzaWizard(); }
   else if(e.key === "ArrowLeft" && wizPasso > 0){ wizPasso--; disegnaWizard(); }
 });
 
