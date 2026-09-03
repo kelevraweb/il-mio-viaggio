@@ -300,6 +300,13 @@ label.field > span{display:block;font-family:var(--sans);font-size:11px;letter-s
 .wiz .prose strong{color:#fff;font-weight:500}
 .wiz-quote{font-family:var(--serif);font-style:italic;font-size:23px;line-height:1.4;color:#fff;border-left:1.5px solid #fff;padding-left:18px;margin:26px 0 0;max-width:42ch}
 .wiz-foot{display:flex;align-items:center;gap:14px;margin-top:36px;flex-wrap:wrap}
+.voce-btn{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;border-radius:50%;border:1px solid var(--w14);background:var(--w08);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .2s,background .2s}
+.voce-btn .ico{width:18px;height:18px}
+.voce-btn:hover{background:var(--w14)}
+.voce-btn[aria-pressed="false"]{opacity:.5}
+.voce-btn.attesa::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid #fff;animation:ring 1.4s ease-out infinite}
+.voce-btn .lbl{position:absolute;right:48px;top:50%;transform:translateY(-50%);white-space:nowrap;font-family:var(--sans);font-size:12px;color:var(--w70);pointer-events:none}
 
 /* ---------- musica: tasto in basso a destra ---------- */
 .musica{position:fixed;right:18px;bottom:18px;z-index:40;width:46px;height:46px;border-radius:50%;border:0;color:#fff;
@@ -315,6 +322,12 @@ label.field > span{display:block;font-family:var(--sans);font-size:11px;letter-s
 .musica .lbl{position:absolute;right:54px;top:50%;transform:translateY(-50%);white-space:nowrap;font-family:var(--sans);font-size:12px;color:var(--w70);
   opacity:0;transition:opacity .2s;pointer-events:none}
 .musica:hover .lbl{opacity:1}
+.suoni{position:fixed;right:18px;bottom:72px;z-index:41;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:999px;animation:rise .25s var(--ease) both}
+.suono{width:40px;height:40px;border-radius:50%;border:1px solid var(--w14);background:var(--w08);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .2s,color .2s}
+.suono .ico{width:17px;height:17px}
+.suono[aria-pressed="true"]{background:#fff;color:var(--ink)}
+.suono .lbl{position:absolute;right:50px;top:50%;transform:translateY(-50%);font-family:var(--sans);font-size:12px;color:var(--w70);white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.suono:hover .lbl{opacity:1}
 @media (max-width:700px){.composer-in{margin-right:56px}}
 
 /* ---------- modale / toast ---------- */
@@ -346,7 +359,8 @@ label.field > span{display:block;font-family:var(--sans);font-size:11px;letter-s
 </div>
 
 <div class="menu" id="menu" aria-hidden="true"></div>
-<button class="musica liquid-glass" id="musica" aria-pressed="false" title="Musica"></button>
+<button class="musica liquid-glass" id="musica" aria-pressed="false" title="Suoni"></button>
+<div class="suoni liquid-glass" id="suoni" hidden></div>
 
 <script>
 /* =========================================================================
@@ -427,7 +441,10 @@ const ICONS = {
   star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
   ear:'<path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4"/>',
-  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  volume:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>',
+  volumex:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/>',
+  train:'<path d="M8 3.1V7a4 4 0 0 0 8 0V3.1"/><path d="m9 15-1-1"/><path d="m15 15 1-1"/><path d="M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5Z"/><path d="m8 19-2 3"/><path d="m16 19 2 3"/>'
 };
 const ico = (n, cls="") => `<svg class="ico ${cls}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||""}</svg>`;
 
@@ -548,8 +565,8 @@ function attachMic(btn, campo, liveEl){
     campo.value = base + sep + finale + interim;
     try{ campo.dispatchEvent(new Event("input", {bubbles:true})); }catch(e){}
   };
-  const sospendiMusica = () => { try{ if(AU.on && AU.ctx && AU.ctx.state === "running"){ musicaSospesa = true; AU.ctx.suspend(); } }catch(e){} };
-  const riprendiMusica = () => { try{ if(musicaSospesa){ musicaSospesa = false; if(AU.on && AU.ctx) AU.ctx.resume(); } }catch(e){} };
+  const sospendiMusica = () => { try{ if((AU.on || AU.treno.on) && AU.ctx && AU.ctx.state === "running"){ musicaSospesa = true; AU.ctx.suspend(); } }catch(e){} };
+  const riprendiMusica = () => { try{ if(musicaSospesa){ musicaSospesa = false; if((AU.on || AU.treno.on) && AU.ctx) AU.ctx.resume(); } }catch(e){} };
   function fine(messaggio){
     attivo = false; interim = ""; setVal();
     btn.classList.remove("on"); btn.setAttribute("aria-pressed", "false");
@@ -870,14 +887,16 @@ function cambiaScena(i){
    sintetico, note sparse su una pentatonica, un soffio di rumore filtrato.
    Zero byte nella pagina, mai uguale due volte.
    ========================================================================= */
-const KEY_MUSICA = "ilmioviaggio.musica";
+const KEY_MUSICA = "ilmioviaggio.musica", KEY_TRENO = "ilmioviaggio.treno";
+const TRENO_SRC = "{{TRENO}}";
 const MUSICA = {
   golden: { root:50, chords:[[0,7,11,16],[5,12,16,21],[9,16,19,24],[7,14,17,23]], every:13, cutoff:720, scala:[0,2,4,7,9],  bellRate:.22, noise:.010, noiseF:500,  onde:false },
   water:  { root:45, chords:[[0,7,10,15],[8,15,19,24],[3,10,14,19],[10,17,21,26]], every:15, cutoff:600, scala:[0,3,5,7,10], bellRate:.16, noise:.022, noiseF:420,  onde:true  },
   woods:  { root:52, chords:[[0,7,14,19],[9,16,19,24],[5,12,16,21],[7,14,19,24]], every:14, cutoff:900, scala:[0,2,4,7,9],  bellRate:.12, noise:.012, noiseF:1300, onde:false },
   dawn:   { root:53, chords:[[0,7,11,16],[4,11,14,19],[9,16,19,24],[5,12,16,21]], every:12, cutoff:820, scala:[0,2,4,7,9],  bellRate:.20, noise:.010, noiseF:700,  onde:false }
 };
-const AU = { ctx:null, on:false, preset:null, voci:new Set(), timer:null, prossimoAccordo:0, prossimaNota:0, idx:0 };
+const AU = { ctx:null, on:false, preset:null, voci:new Set(), timer:null, prossimoAccordo:0, prossimaNota:0, idx:0,
+             vogliaMusica:true, vogliaTreno:true, treno:{on:false, src:null, g:null, buf:null, caricando:null} };
 const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
 
 function musicaSetup(){
@@ -889,8 +908,9 @@ function musicaSetup(){
   const len = Math.floor(ctx.sampleRate * 3.2), ir = ctx.createBuffer(2, len, ctx.sampleRate);
   for(let ch=0; ch<2; ch++){ const d = ir.getChannelData(ch); for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.6); }
   AU.riverbero = ctx.createConvolver(); AU.riverbero.buffer = ir;
+  AU.musicaG = ctx.createGain(); AU.musicaG.gain.value = 0; AU.musicaG.connect(AU.master);
   AU.wet = ctx.createGain(); AU.wet.gain.value = .55; AU.dry = ctx.createGain(); AU.dry.gain.value = .75;
-  AU.riverbero.connect(AU.wet); AU.wet.connect(AU.master); AU.dry.connect(AU.master);
+  AU.riverbero.connect(AU.wet); AU.wet.connect(AU.musicaG); AU.dry.connect(AU.musicaG);
   AU.bus = ctx.createGain(); AU.bus.connect(AU.dry); AU.bus.connect(AU.riverbero);
   // soffio: rumore bianco in loop → passa-banda
   const nl = ctx.sampleRate * 2, nb = ctx.createBuffer(1, nl, ctx.sampleRate), nd = nb.getChannelData(0);
@@ -898,7 +918,7 @@ function musicaSetup(){
   const src = ctx.createBufferSource(); src.buffer = nb; src.loop = true;
   AU.noiseF = ctx.createBiquadFilter(); AU.noiseF.type = "bandpass"; AU.noiseF.Q.value = .6;
   AU.noiseG = ctx.createGain(); AU.noiseG.gain.value = 0;
-  src.connect(AU.noiseF); AU.noiseF.connect(AU.noiseG); AU.noiseG.connect(AU.riverbero); AU.noiseG.connect(AU.master); src.start();
+  src.connect(AU.noiseF); AU.noiseF.connect(AU.noiseG); AU.noiseG.connect(AU.riverbero); AU.noiseG.connect(AU.musicaG); src.start();
   AU.onde = ctx.createOscillator(); AU.onde.type = "sine"; AU.onde.frequency.value = .07;
   AU.ondeG = ctx.createGain(); AU.ondeG.gain.value = 0; AU.onde.connect(AU.ondeG); AU.ondeG.connect(AU.noiseG.gain); AU.onde.start();
 }
@@ -956,41 +976,101 @@ function musicaScena(i){
   AU.noiseG.gain.setTargetAtTime(p.noise, now, 1.5);
   AU.ondeG.gain.setTargetAtTime(p.onde ? p.noise * .8 : 0, now, 1.5);
 }
-function musicaAvvia(){
-  if(!(window.AudioContext || window.webkitAudioContext)){ toast("Il browser non supporta l'audio generato."); return; }
+function contestoAudio(){
+  if(!(window.AudioContext || window.webkitAudioContext)) return Promise.reject();
   if(!AU.ctx) musicaSetup();
   const ctx = AU.ctx;
   const go = () => {
-    AU.on = true; AU.preset = null; musicaScena(BG.active >= 0 ? BG.active : 0);
     AU.master.gain.cancelScheduledValues(ctx.currentTime); AU.master.gain.setValueAtTime(AU.master.gain.value, ctx.currentTime);
-    AU.master.gain.linearRampToValueAtTime(.9, ctx.currentTime + 2.5);
-    clearInterval(AU.timer); AU.timer = setInterval(musicaTick, 400); musicaTick();
-    document.getElementById("musica").setAttribute("aria-pressed", "true");
-    try{ localStorage.setItem(KEY_MUSICA, "1"); }catch(e){}
+    AU.master.gain.linearRampToValueAtTime(.9, ctx.currentTime + 1.5);
   };
-  if(ctx.state !== "running") ctx.resume().then(go, go); else go();
+  if(ctx.state !== "running") return ctx.resume().then(go, go);
+  go(); return Promise.resolve();
+}
+function sospendiSeSilenzio(){ if(AU.ctx && !AU.on && !AU.treno.on){ try{ AU.ctx.suspend(); }catch(e){} } }
+function musicaAvvia(){
+  AU.vogliaMusica = true; try{ localStorage.setItem(KEY_MUSICA, "1"); }catch(e){}
+  aggiornaSuoniUI();
+  contestoAudio().then(() => {
+    const ctx = AU.ctx;
+    AU.on = true; AU.preset = null; musicaScena(BG.active >= 0 ? BG.active : 0);
+    AU.musicaG.gain.cancelScheduledValues(ctx.currentTime); AU.musicaG.gain.setValueAtTime(AU.musicaG.gain.value, ctx.currentTime);
+    AU.musicaG.gain.linearRampToValueAtTime(1, ctx.currentTime + 2.5);
+    clearInterval(AU.timer); AU.timer = setInterval(musicaTick, 400); musicaTick();
+  }, () => { toast("Il browser non supporta l'audio generato."); });
 }
 function musicaFerma(){
+  AU.vogliaMusica = false; try{ localStorage.setItem(KEY_MUSICA, "0"); }catch(e){}
+  aggiornaSuoniUI();
   if(!AU.ctx || !AU.on) return;
   const ctx = AU.ctx, now = ctx.currentTime;
   AU.on = false; clearInterval(AU.timer); AU.timer = null;
-  AU.master.gain.cancelScheduledValues(now); AU.master.gain.setValueAtTime(AU.master.gain.value, now); AU.master.gain.linearRampToValueAtTime(0, now + 1);
-  setTimeout(() => { if(!AU.on){ AU.voci.forEach(v => v.oscs.forEach(o => { try{ o.stop(); }catch(e){} })); AU.voci.clear(); ctx.suspend(); } }, 1100);
-  document.getElementById("musica").setAttribute("aria-pressed", "false");
-  try{ localStorage.setItem(KEY_MUSICA, "0"); }catch(e){}
+  AU.musicaG.gain.cancelScheduledValues(now); AU.musicaG.gain.setValueAtTime(AU.musicaG.gain.value, now); AU.musicaG.gain.linearRampToValueAtTime(0, now + 1);
+  setTimeout(() => { if(!AU.on){ AU.voci.forEach(v => v.oscs.forEach(o => { try{ o.stop(); }catch(e){} })); AU.voci.clear(); sospendiSeSilenzio(); } }, 1100);
+}
+/* il rumore del treno: un loop campione-preciso dentro lo stesso contesto audio (niente buco al riavvolgimento) */
+async function trenoAvvia(){
+  if(!TRENO_SRC) return;
+  AU.vogliaTreno = true; try{ localStorage.setItem(KEY_TRENO, "1"); }catch(e){}
+  aggiornaSuoniUI();
+  try{ await contestoAudio(); }catch(e){ return; }
+  const ctx = AU.ctx, t = AU.treno;
+  t.on = true;
+  if(!t.buf){
+    if(!t.caricando) t.caricando = fetch(TRENO_SRC).then(r => r.arrayBuffer())
+      .then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
+      .then(buf => { t.buf = buf; }).catch(() => { t.caricando = null; });
+    await t.caricando;
+    if(!t.buf || !t.on) return;
+  }
+  if(t.src) return;
+  const src = ctx.createBufferSource(); src.buffer = t.buf; src.loop = true;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(.5, ctx.currentTime + 2.5);
+  src.connect(g); g.connect(AU.master); src.start();
+  t.src = src; t.g = g;
+}
+function trenoFerma(){
+  AU.vogliaTreno = false; try{ localStorage.setItem(KEY_TRENO, "0"); }catch(e){}
+  aggiornaSuoniUI();
+  const t = AU.treno; if(!t.on) return;
+  t.on = false;
+  if(AU.ctx && t.src){
+    const now = AU.ctx.currentTime, src = t.src, g = t.g;
+    g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + 1);
+    setTimeout(() => { try{ src.stop(); }catch(e){} sospendiSeSilenzio(); }, 1100);
+    t.src = null; t.g = null;
+  } else sospendiSeSilenzio();
+}
+function aggiornaSuoniUI(){
+  const b = document.getElementById("musica"); if(!b) return;
+  b.setAttribute("aria-pressed", String(AU.vogliaMusica || AU.vogliaTreno));
+  const pm = document.getElementById("suono-musica"), pt = document.getElementById("suono-treno");
+  if(pm) pm.setAttribute("aria-pressed", String(AU.vogliaMusica));
+  if(pt) pt.setAttribute("aria-pressed", String(AU.vogliaTreno));
 }
 function initMusica(){
-  const b = document.getElementById("musica");
-  b.innerHTML = ico("music") + '<span class="eq"><i></i><i></i><i></i><i></i></span><span class="lbl">Musica</span>';
-  b.addEventListener("click", () => { AU.on ? musicaFerma() : musicaAvvia(); });
-  // accesa di default: i browser non fanno partire l'audio da soli, quindi parte al primo tocco
-  let voleva = true; try{ voleva = localStorage.getItem(KEY_MUSICA) !== "0"; }catch(e){}
-  if(voleva){
-    b.setAttribute("aria-pressed", "true"); b.title = "Musica — parte al primo tocco";
+  const b = document.getElementById("musica"), pop = document.getElementById("suoni");
+  b.innerHTML = ico("music") + '<span class="eq"><i></i><i></i><i></i><i></i></span><span class="lbl">Suoni</span>';
+  pop.innerHTML = `${TRENO_SRC ? `<button class="suono" id="suono-treno" aria-pressed="false" title="Rumore del treno">${ico("train")}<span class="lbl">treno</span></button>` : ""}
+    <button class="suono" id="suono-musica" aria-pressed="false" title="Musica">${ico("music")}<span class="lbl">musica</span></button>`;
+  try{ AU.vogliaMusica = localStorage.getItem(KEY_MUSICA) !== "0"; AU.vogliaTreno = !!TRENO_SRC && localStorage.getItem(KEY_TRENO) !== "0"; }catch(e){}
+  aggiornaSuoniUI();
+  b.addEventListener("click", () => { pop.hidden = !pop.hidden; });
+  document.addEventListener("pointerdown", e => {
+    if(pop.hidden) return;
+    if(e.target && e.target.closest && (e.target.closest("#suoni") || e.target.closest("#musica"))) return;
+    pop.hidden = true;
+  });
+  const sm = document.getElementById("suono-musica"); if(sm) sm.addEventListener("click", () => AU.vogliaMusica ? musicaFerma() : musicaAvvia());
+  const st = document.getElementById("suono-treno"); if(st) st.addEventListener("click", () => AU.vogliaTreno ? trenoFerma() : trenoAvvia());
+  // accesi di default: i browser non fanno partire l'audio da soli, quindi partono al primo tocco
+  if(AU.vogliaMusica || AU.vogliaTreno){
+    b.title = "Suoni — partono al primo tocco";
     const primoGesto = e => {
-      if(e.target && e.target.closest && e.target.closest("#musica")) return;   // il tasto decide da solo
+      if(e.target && e.target.closest && (e.target.closest("#musica") || e.target.closest("#suoni"))) return;
       document.removeEventListener("pointerdown", primoGesto); document.removeEventListener("keydown", primoGesto);
-      if(!AU.on) musicaAvvia();
+      if(AU.vogliaMusica && !AU.on) musicaAvvia();
+      if(AU.vogliaTreno && !AU.treno.on) trenoAvvia();
     };
     document.addEventListener("pointerdown", primoGesto); document.addEventListener("keydown", primoGesto);
   }
@@ -1674,7 +1754,7 @@ function renderPatto(){
         <p>Il <strong>ritratto</strong> è la memoria: il dialogo si accorcia, il ritratto resta e viene riletto ogni volta. Aggiornalo quando senti che sei cambiato.</p>
         <p>I <strong>centimetri</strong> non hanno serie da non interrompere, né giorni segnati in rosso. Un giorno vuoto è un giorno vissuto lo stesso.</p>
         <p>Le <strong>domande a specchio</strong> tornano da sole dopo una settimana. Puoi anche non rispondere: a volte una domanda lavora meglio se resta aperta.</p>
-        <p>La <strong>musica</strong> non è un file: viene generata dal vivo nel browser, una per ogni paesaggio, e non suona mai uguale. È accesa di default e parte al primo tocco; il tasto in basso a destra la spegne, e la scelta viene ricordata.</p>
+        <p>La <strong>musica</strong> non è un file: viene generata dal vivo nel browser, una per ogni paesaggio, e non suona mai uguale. Sotto c'è anche il rumore del treno, in loop. Sono accesi di default e partono al primo tocco; il tasto in basso a destra apre due interruttori — treno e musica — e la scelta viene ricordata.</p>
         <p>La <strong>voce</strong> viene trascritta dal riconoscimento vocale del tuo browser, in tempo reale, mentre parli. Se il microfono non è consentito in questa finestra, scrivi: tutto funziona lo stesso.</p>
         ${fuoriDallArtifact() && !HTTP.proxy ? `<p class="muted" style="font-size:14px"><strong style="color:var(--w70)">Collegamento.</strong> ${chiaveLocale() ? "Questo browser usa una tua chiave." : "Questa copia non è collegata al compagno di viaggio."} <button class="btn-link" id="patto-chiave">${chiaveLocale() ? "cambia o rimuovi la chiave" : "usa una tua chiave"}</button></p>` : ""}
         <p>Tutto quello che scrivi resta <strong>nel tuo browser</strong>: nessun server, nessuno lo legge, nemmeno chi ha costruito questa pagina. Con <em>Esporta</em> fai un backup e lo riprendi su un altro dispositivo.</p>
@@ -1688,12 +1768,44 @@ function renderPatto(){
    WIZARD
    ========================================================================= */
 let wizPasso = 0;
+/* ---- la voce che legge il wizard: una clip per passo, ElevenLabs, incorporata negli asset ---- */
+const VOCI = ["{{VOCE_1}}","{{VOCE_2}}","{{VOCE_3}}","{{VOCE_4}}","{{VOCE_5}}","{{VOCE_6}}"];
+const KEY_VOCE = "ilmioviaggio.voce";
+const VOCE = { on:true, audio:null, bloccata:false };
+try{ VOCE.on = localStorage.getItem(KEY_VOCE) !== "0"; }catch(e){}
+function duckMusica(giu){ try{ if(AU.ctx && AU.on) AU.master.gain.setTargetAtTime(giu ? .25 : .9, AU.ctx.currentTime, .5); }catch(e){} }
+function fermaVoce(){ if(VOCE.audio){ try{ VOCE.audio.pause(); }catch(e){} VOCE.audio = null; } duckMusica(false); }
+function leggiPasso(i){
+  fermaVoce();
+  const b = document.getElementById("wiz-voce");
+  if(!VOCE.on || !VOCI[i]) return;
+  const a = new Audio(VOCI[i]); a.preload = "auto"; VOCE.audio = a;
+  a.onended = () => { if(VOCE.audio === a){ VOCE.audio = null; duckMusica(false); } };
+  const p = a.play();
+  if(p && p.then) p.then(() => { VOCE.bloccata = false; if(b) b.classList.remove("attesa"); duckMusica(true); })
+                   .catch(() => { VOCE.bloccata = true; if(b) b.classList.add("attesa"); });   // serve un tocco: i browser non parlano da soli
+  else duckMusica(true);
+}
+document.addEventListener("pointerdown", e => {
+  if(!document.getElementById("wiz") || !VOCE.on || !VOCE.bloccata) return;
+  if(e.target && e.target.closest && e.target.closest("#wiz-voce")) return;
+  VOCE.bloccata = false; leggiPasso(wizPasso);
+});
+function toggleVoce(){
+  VOCE.on = !VOCE.on;
+  try{ localStorage.setItem(KEY_VOCE, VOCE.on ? "1" : "0"); }catch(e){}
+  const b = document.getElementById("wiz-voce");
+  if(b){ b.setAttribute("aria-pressed", String(VOCE.on)); b.innerHTML = iconaVoce(); }
+  if(VOCE.on) leggiPasso(wizPasso); else fermaVoce();
+}
+const iconaVoce = () => (VOCE.on ? ico("volume") : ico("volumex")) + `<span class="lbl">${VOCE.on ? "voce accesa" : "voce spenta"}</span>`;
 function apriWizard(da){ wizPasso = da || 0; disegnaWizard(); }
 function disegnaWizard(){
   const p = WIZARD[wizPasso], ultimo = wizPasso === WIZARD.length - 1;
   let el = document.getElementById("wiz");
   if(!el){ el = document.createElement("div"); el.id = "wiz"; el.className = "wiz"; document.body.appendChild(el); }
   el.innerHTML = `<div class="wiz-box liquid-glass deep">
+    ${VOCI[0] ? `<button class="voce-btn" id="wiz-voce" aria-pressed="${VOCE.on}" title="Voce che legge">${iconaVoce()}</button>` : ""}
     <div class="wiz-steps">
       ${WIZARD.map((w,i)=>`<button class="${i<wizPasso?"done":""}" data-passo="${i}" aria-current="${i===wizPasso}" title="${esc(w.kicker)}" aria-label="Passo ${i+1}: ${esc(w.kicker)}"><i></i></button>`).join("")}
     </div>
@@ -1717,11 +1829,14 @@ function disegnaWizard(){
   const chi = el.querySelector("#wiz-chiudi");  if(chi) chi.addEventListener("click", () => chiudiWizard(false));
   const fin = el.querySelector("#wiz-fine");    if(fin) fin.addEventListener("click", () => chiudiWizard(true));
   const primo = el.querySelector(".wiz-foot .btn-white"); if(primo) primo.focus();
+  const vb = el.querySelector("#wiz-voce"); if(vb) vb.addEventListener("click", toggleVoce);
+  leggiPasso(wizPasso);
 }
 function viaggioVuoto(){
   return !S.stato.ritratto && !S.dialogo.some(t=>t.role==="user") && !S.diario.length && !S.centimetri.length;
 }
 async function chiudiWizard(alDialogo){
+  fermaVoce();
   const el = document.getElementById("wiz"); if(el) el.remove();
   try{ sessionStorage.setItem("wizChiuso","1"); }catch(e){}
   if(!S.stato.wizardVisto){ S.stato.wizardVisto = true; await persistStato(); render(); }
