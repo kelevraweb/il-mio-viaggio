@@ -1321,6 +1321,7 @@ function renderDialogo(){
         <span class="row" style="gap:12px">
           ${S.stato.ritratto ? `<button class="btn-link" id="ritratto-leggi">leggi il ritratto</button>` : ""}
           ${AI() ? `<button class="btn-glass" id="ritratto-agg" ${turni < 2 ? "disabled" : ""} title="${turni < 2 ? "serve prima un po' di dialogo" : "distilla il dialogo nella memoria del viaggio"}">${ico("refresh")} Aggiorna il ritratto</button>` : ""}
+          ${turni > 0 ? `<button class="btn-link" id="dialogo-reset" title="ricomincia da capo">ricomincia</button>` : ""}
         </span>
       </div>
       ${S.stato.ritratto ? `<div id="ritratto-testo" class="prose" hidden style="margin:0 auto 24px;max-width:70ch;padding-bottom:18px;border-bottom:1px solid var(--w08)">${fmt(S.stato.ritratto)}</div>` : ""}
@@ -1339,6 +1340,7 @@ function renderDialogo(){
   </div>`;
   legaStrumentiMessaggi();
   const ra = $("#ritratto-agg"); if(ra) ra.addEventListener("click", aggiornaRitratto);
+  const rr = $("#dialogo-reset"); if(rr) rr.addEventListener("click", resetDialogo);
   const rl = $("#ritratto-leggi"); if(rl) rl.addEventListener("click", () => { const t = $("#ritratto-testo"); t.hidden = !t.hidden; rl.textContent = t.hidden ? "leggi il ritratto" : "nascondi"; });
   const inp = $("#chat-input");
   micChat = attachMic($("#chat-mic"), inp, $("#chat-live"));
@@ -1409,6 +1411,33 @@ async function invia(){
   }
   ctlChat = null;
   const s = $("#chat-send"), st = $("#chat-stop"); if(s) s.disabled = false; if(st) st.hidden = true;
+}
+function resetDialogo(){
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="modal-box liquid-glass deep">
+    <h3>Ricomincio il dialogo da capo?</h3>
+    <p class="lede" style="margin-top:6px;font-size:14.5px">La conversazione viene cancellata e si riparte dalla prima domanda. Diario, desideri, mantra e centimetri restano. Il ritratto — la memoria di chi sei — puoi tenerlo o azzerare anche quello.</p>
+    <div class="row" style="margin-top:18px;justify-content:flex-end">
+      <button class="btn-glass" data-x>Annulla</button>
+      <button class="btn-glass" data-tutto>Anche il ritratto</button>
+      <button class="btn-white" data-solo>Solo il dialogo</button>
+    </div></div>`;
+  document.body.appendChild(m);
+  const chiudi = () => m.remove();
+  const via = async (ancheRitratto) => {
+    chiudi();
+    if(ctlChat){ try{ ctlChat.abort(); }catch(e){} }
+    if(micChat) micChat.stop();
+    S.dialogo = [];
+    if(ancheRitratto){ S.stato.ritratto = ""; S.stato.ritrattoData = ""; await persistStato(); }
+    await persistDialogo();
+    toast(ancheRitratto ? "Dialogo e ritratto azzerati." : "Dialogo azzerato.");
+    render();
+  };
+  m.querySelector("[data-x]").onclick = chiudi;
+  m.querySelector("[data-solo]").onclick = () => via(false);
+  m.querySelector("[data-tutto]").onclick = () => via(true);
+  m.addEventListener("click", e => { if(e.target===m) chiudi(); });
 }
 async function aggiornaRitratto(){
   const b = $("#ritratto-agg"); if(b) b.disabled = true;
