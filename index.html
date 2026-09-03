@@ -45,14 +45,14 @@ button{font:inherit}
 @keyframes bob{0%{transform:translateY(0) scale(1.03)}50%{transform:translateY(-6px) scale(1.03)}100%{transform:translateY(0) scale(1.03)}}
 
 /* ---------- vetro liquido (dalla specifica) ---------- */
-.liquid-glass{background:rgba(255,255,255,0.01);background-blend-mode:luminosity;
+.liquid-glass{background:rgba(16,18,20,.46);background-blend-mode:normal;
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border:none;
   box-shadow:inset 0 1px 1px rgba(255,255,255,0.1);position:relative;overflow:hidden}
 .liquid-glass::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.4px;
   background:linear-gradient(180deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.15) 20%,rgba(255,255,255,0) 40%,
     rgba(255,255,255,0) 60%,rgba(255,255,255,0.15) 80%,rgba(255,255,255,0.45) 100%);
   -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.liquid-glass.deep{background:rgba(8,12,10,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.liquid-glass.deep{background:rgba(8,10,10,.64);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 
 /* ---------- contenuto ---------- */
 .content{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column}
@@ -108,6 +108,11 @@ button:disabled{opacity:.4;cursor:default;transform:none !important;box-shadow:n
 .hero-main{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
   padding:6px 20px 14px;gap:18px;color:#fff;transition:color 700ms}
 button.badge{border:0;cursor:pointer;color:inherit}
+.hero-main{text-shadow:0 2px 22px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.5)}
+.hero-main .pill,.hero-main .badge,.hero-main .hero-chips,.hero-main .live{text-shadow:none;color:#fff}
+.brand,.stats,.tape-wrap{text-shadow:0 1px 10px rgba(0,0,0,.65)}
+.hero .chip{background:rgba(16,18,20,.38);border-color:rgba(255,255,255,.35);opacity:.9}
+.hero .chip:hover{opacity:1}
 .tape-wrap{margin:0 auto;width:calc(100% - 32px);max-width:900px;border-radius:18px;padding:12px 18px 10px;color:#fff;animation:rise 1s var(--ease) .7s both}
 .tape-wrap .tape-track{height:66px;padding-top:12px}
 .tape-wrap .tick.lived .stem{height:34px}.tape-wrap .tick.week .stem{height:20px}.tape-wrap .tick .stem{height:10px}
@@ -130,13 +135,10 @@ button.badge{border:0;cursor:pointer;color:inherit}
 .pill input::placeholder{color:currentColor;opacity:.55}
 .pill .mic{width:34px;height:34px;border:0;background:transparent;color:inherit}
 .pill .mic.on{background:#fff;color:var(--dark)}
-:root.bright .pill .mic.on{background:var(--dark);color:#fff}
-:root.bright .hero-main .btn-white{background:var(--dark);color:#fff}
 .hero-chips{justify-content:center;animation:rise 1s var(--ease) .6s both}
 .hero .chip{color:inherit;border-color:currentColor;opacity:.6}
 .hero .chip:hover{opacity:.9}
 .hero .chip[aria-pressed="true"]{opacity:1;background:#fff;color:var(--dark);border-color:#fff}
-:root.bright .hero .chip[aria-pressed="true"]{background:var(--dark);color:#fff;border-color:var(--dark)}
 .hero .live{color:inherit;opacity:.8;text-align:center}
 .switcher{display:flex;gap:18px;font-family:var(--sans);font-size:12.5px;flex-wrap:wrap;justify-content:center}
 .switcher button{background:none;border:0;border-bottom:1.5px solid transparent;color:inherit;opacity:.5;padding:6px 2px;cursor:pointer;transition:opacity .3s,border-color .3s}
