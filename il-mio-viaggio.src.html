@@ -729,6 +729,10 @@ const KEY_API = "ilmioviaggio.apikey", KEY_CODICE = "ilmioviaggio.codice";
 const MODELLO = "claude-opus-5";
 const HTTP = { proxy:null };            // null = non ancora sondato
 const chiaveLocale = () => { try{ return localStorage.getItem(KEY_API) || ""; }catch(e){ return ""; } };
+try{
+  const u = new URL(location.href), c = u.searchParams.get("codice");
+  if(c){ localStorage.setItem(KEY_CODICE, c.trim()); u.searchParams.delete("codice"); history.replaceState(null, "", u.pathname + (u.search || "") + u.hash); }
+}catch(e){}
 const codiceLocale = () => { try{ return localStorage.getItem(KEY_CODICE) || ""; }catch(e){ return ""; } };
 function turniPerAPI(input){
   const turni = typeof input === "string" ? [{role:"user", content:input}] : input;
@@ -771,9 +775,11 @@ async function sampleHTTP(input, opts){
     }catch(e){ if(aborted()) throw {code:"cancelled", message:""}; if(e && e.code) throw e; throw {code:"upstream_error", message:String(e)}; }
     if(resp.ok) break;
     let msg = ""; try{ msg = ((await resp.json()).error||{}).message || ""; }catch(e){}
-    if(resp.status === 401 && viaProxy && tentativi === 1){
-      const c = await chiediTesto({titolo:"Codice d'accesso", testo:"Chi ha pubblicato questa pagina ha messo un codice per usare il dialogo.", valore:codiceLocale(), ok:"Entra"});
-      if(c === null) throw {code:"not_granted", message:"codice mancante"};
+    if(resp.status === 401 && viaProxy && tentativi <= 3){
+      const c = await chiediTesto({titolo:"Codice d'accesso", testo: tentativi === 1 && !codiceLocale()
+          ? "Chi ha pubblicato questa pagina ha messo un codice per usare il dialogo. Te lo ha dato lui."
+          : "Il codice non è giusto: riprova.", valore:codiceLocale(), ok:"Entra"});
+      if(c === null) throw {code:"codice_mancante", message:"codice mancante"};
       try{ localStorage.setItem(KEY_CODICE, c.trim()); }catch(e){}
       continue;
     }
@@ -829,8 +835,9 @@ async function chiedi(input, opts){
 function messaggioErrore(e){
   const c = e && e.code;
   if(c==="cancelled") return "";
+  if(c==="codice_mancante") return "Per parlare serve il codice d'accesso: rimanda il messaggio e inseriscilo.";
   if(c==="not_granted"||c==="sampling_disabled"||c==="not_declared"||c==="capability_disabled")
-    return "Il compagno di viaggio non è raggiungibile da qui, per ora.";
+    return fuoriDallArtifact() ? "Questa copia non è collegata al compagno di viaggio. Usa il link con il collegamento attivo." : "Il compagno di viaggio non è raggiungibile da qui, per ora.";
   if(c==="rate_limited") return "Troppe richieste ravvicinate. Riprova tra qualche minuto.";
   if(c==="session_expired") return "Sessione scaduta: rientra in Claude e riprova.";
   if(c==="prompt_too_large") return "C'è troppo testo da leggere in una volta. Aggiorna il ritratto per alleggerire la conversazione.";
